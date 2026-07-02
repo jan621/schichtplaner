@@ -22,5 +22,11 @@ public class User : IdentityUser
 
     public Guid? PasswordResetGuid { get; set; }
     
-    public string? SmoobuApiKey { get; set; }
+    public string? GuestyClientId { get; set; }
+
+    public string? GuestyClientSecret { get; set; }
+
+    public string? GuestyAccessToken { get; set; }
+
+    public DateTime? GuestyTokenExpiresAt { get; set; }
 }

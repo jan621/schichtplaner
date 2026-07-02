@@ -3,13 +3,13 @@
 @using Microsoft.Extensions.Localization
 @using CrossCutting.Language
 @using planer.Dialogs
-@using SmoobuManagement.Contract
+@using GuestyManagement.Contract
 @using UserManagement.Contract
 @using CrossCutting.Entities
 @using OrganizationManagement.Contract
 
 @inject IStringLocalizer<Language> Localizer;
-@inject ISmoobuManager SmoobuManager;
+@inject IGuestyManager GuestyManager;
 @inject ISnackbar SnackBar;
 @inject IDialogService DialogService;
 @inject IUserManager UserManager;
@@ -42,15 +42,21 @@
                         <MudDivider Class="py-2"/>
                         <MudCardContent>
                             <MudGrid Style="align-items: baseline" Spacing="3">
-                                <!--Smoobu API Key-->
-                                <MudItem xs="12" sm="10">
-                                    <MudTextField @bind-Value="@_smoobuApiKey" Label="@Localizer["InsertSmoobuApiKey"]" Variant="Variant.Outlined"/>
+                                <!--Guesty API credentials-->
+                                <MudItem xs="12" sm="5">
+                                    <MudTextField @bind-Value="@_guestyClientId" Label="@Localizer["InsertGuestyClientId"]" Variant="Variant.Outlined"/>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="5">
+                                    <MudTextField @bind-Value="@_guestyClientSecret" Label="@Localizer["InsertGuestyClientSecret"]"
+                                                  Variant="Variant.Outlined" InputType="InputType.Password"/>
                                 </MudItem>
 
                                 <MudItem xs="12" sm="2">
-                                    <MudButton OnClick="@SaveSmoobuApiKey" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
-                                               StartIcon="@Icons.Material.Filled.Save" Disabled="@string.IsNullOrEmpty(_smoobuApiKey)">
-                                        @if (_smoobuLoading)
+                                    <MudButton OnClick="@SaveGuestyCredentials" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
+                                               StartIcon="@Icons.Material.Filled.Save"
+                                               Disabled="@(string.IsNullOrEmpty(_guestyClientId) || string.IsNullOrEmpty(_guestyClientSecret))">
+                                        @if (_guestyLoading)
                                         {
                                             <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Success"/>
                                             <MudText Class="ms-2">@Localizer["Processing"]</MudText>
@@ -151,10 +157,11 @@
 </AuthorizeView>
 
 @code {
-    private string _smoobuApiKey = string.Empty;
+    private string _guestyClientId = string.Empty;
+    private string _guestyClientSecret = string.Empty;
     private int _timeTrackingGapHours;
 
-    private bool _smoobuLoading,
+    private bool _guestyLoading,
         _timeTrackingGapHoursLoading,
         _employeeAllowedEditTimeEntryLoading,
         _employeeAllowedManualTimeEntryLoading,
@@ -182,7 +189,7 @@
 
     async Task LoadApiKeys()
     {
-        _smoobuApiKey = await SmoobuManager.GetUserApiKeyAsync();
+        _guestyClientId = await GuestyManager.GetUserClientIdAsync();
     }
 
     void LoadOrganizationSettings()
@@ -201,34 +208,31 @@
         return !dialogResult.Canceled;
     }
 
-    async Task SaveSmoobuApiKey()
+    async Task SaveGuestyCredentials()
     {
-        _smoobuLoading = true;
+        _guestyLoading = true;
 
         var dialogResult = await SaveSettingConfirmationDialog();
 
         if (!dialogResult)
         {
-            _smoobuLoading = false;
+            _guestyLoading = false;
             return;
         }
 
-        var isKeyValid = await SmoobuManager.IsApiKeyValidAsync(_smoobuApiKey);
-        if (!isKeyValid)
+        var credentialsSaved = await GuestyManager.SaveCredentialsAsync(_guestyClientId, _guestyClientSecret);
+        if (credentialsSaved)
+        {
+            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
+            _guestyClientSecret = string.Empty;
+        }
+        else
         {
             SnackBar.Add(Localizer["ApiKeyInvalid"], Severity.Warning);
-            _smoobuLoading = false;
-            return;
         }
 
-        var apiKeySaved = await SmoobuManager.SaveApiKeyAsync(_smoobuApiKey);
-        if (apiKeySaved)
-            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
-        else
-            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
-
         await LoadApiKeys();
-        _smoobuLoading = false;
+        _guestyLoading = false;
     }
 
     async Task OnSaveTimeTrackingAsync()

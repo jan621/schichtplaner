@@ -3,14 +3,14 @@
 
 @using Microsoft.Extensions.Localization
 @using CrossCutting.Language
-@using SmoobuManagement.Contract
+@using GuestyManagement.Contract
 @using CrossCutting.DataObjects
 @using planer.Dialogs.Appointment
 @using AppointmentManagement.Contract
 @using planer.Dialogs.Employee
 
 @inject IStringLocalizer<Language> Localizer;
-@inject ISmoobuManager SmoobuManager;
+@inject IGuestyManager GuestyManager;
 @inject IDialogService DialogService;
 @inject ISnackbar SnackBar;
 @inject IAppointmentManager AppointmentManager;

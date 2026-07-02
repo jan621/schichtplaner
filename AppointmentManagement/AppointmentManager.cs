@@ -2,19 +2,19 @@ using AppointmentManagement.Contract;
 using BookingAdditionManagement.Contract;
 using CrossCutting.DataObjects;
 using CrossCutting.Entities;
-using CrossCutting.Entities.NotMapped.Smoobu;
+using CrossCutting.Entities.NotMapped.Guesty;
 using CrossCutting.Language;
 using DatabaseManagement.Contract;
 using Datastoring.EfCore;
 using Microsoft.Extensions.Localization;
-using SmoobuManagement.Contract;
+using GuestyManagement.Contract;
 using TagManagement.Contract;
 
 namespace AppointmentManagement;
 
 public class AppointmentManager(
     IDatabaseManager<Appointment, PlanerContext> databaseManager,
-    ISmoobuManager smoobuManager,
+    IGuestyManager guestyManager,
     ITagManager tagManager,
     IBookingAdditionManager bookingAdditionManager,
     IStringLocalizer<Language> localizer)
@@ -54,7 +54,7 @@ public class AppointmentManager(
 
     public async Task<IEnumerable<CustomCalendarItem>> GetAllWithSmoobuGroupedAsync()
     {
-        var rootBooking = await smoobuManager.GetBookingsAsync();
+        var rootBooking = await guestyManager.GetBookingsAsync();
         var appointments = await databaseManager.GetAllAsync();
 
         var dbAdditions = await bookingAdditionManager.GetAllAsync();

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -10,14 +10,12 @@
       <ProjectReference Include="..\CrossCutting\CrossCutting.csproj" />
       <ProjectReference Include="..\DatabaseManagement.Contract\DatabaseManagement.Contract.csproj" />
       <ProjectReference Include="..\Datastoring.EfCore\Datastoring.EfCore.csproj" />
-      <ProjectReference Include="..\SmoobuManagement.Contract\SmoobuManagement.Contract.csproj" />
+      <ProjectReference Include="..\GuestyManagement.Contract\GuestyManagement.Contract.csproj" />
       <ProjectReference Include="..\UserManagement.Contract\UserManagement.Contract.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
-        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\8.0.0\ref\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
-      </Reference>
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
     </ItemGroup>
 
 </Project>

@@ -1,12 +1,12 @@
 @using CrossCutting.Language
 @using Microsoft.Extensions.Localization
 @using CrossCutting.Entities
-@using CrossCutting.Entities.NotMapped.Smoobu
+@using CrossCutting.Entities.NotMapped.Guesty
 @using MudBlazor.Utilities
-@using SmoobuManagement.Contract
+@using GuestyManagement.Contract
 
 @inject IStringLocalizer<Language> Localizer;
-@inject ISmoobuManager SmoobuManager;
+@inject IGuestyManager GuestyManager;
 
 <MudDialog>
     <DialogContent>
@@ -91,7 +91,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var loadedBasicAccommodations = await SmoobuManager.GetBasicAccommodationsAsync();
+        var loadedBasicAccommodations = await GuestyManager.GetBasicAccommodationsAsync();
         _accommodations = loadedBasicAccommodations;
         await base.OnInitializedAsync();
     }

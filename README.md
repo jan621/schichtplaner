@@ -1,13 +1,13 @@
 # Schichtplaner (HostFlow-Planer)
 
 Blazor-Server-Anwendung (.NET 8) zur Schichtplanung für Ferienwohnungs-Teams:
-Kalender mit Smoobu-Buchungen, Zeiterfassung mit Excel-Export, Team-/Mitarbeiter-
+Kalender mit Guesty-Buchungen, Zeiterfassung mit Excel-Export, Team-/Mitarbeiter-
 und Tag-Verwaltung, Rollen- und Organisationsmodell.
 
 - UI: MudBlazor + Heron.MudCalendar
 - Datenbank: MySQL 8 (EF Core / Pomelo), zwei DbContexts (Fachdaten + Identity),
   die sich dank getrennter Migrations-Verlaufstabellen **eine** Datenbank teilen können
-- Anbindung: [Smoobu-API](https://docs.smoobu.com) (API-Key wird in den Einstellungen hinterlegt)
+- Anbindung: [Guesty Open API](https://open-api-docs.guesty.com) (OAuth2 Client-ID und Client-Secret werden in den Einstellungen hinterlegt)
 
 ## Konfiguration
 

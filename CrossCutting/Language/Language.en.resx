@@ -299,8 +299,11 @@
     <data name="ShiftPlan" xml:space="preserve">
         <value>Shift plan</value>
     </data>
-    <data name="InsertSmoobuApiKey" xml:space="preserve">
-        <value>Enter your Smoobu Api Key here</value>
+    <data name="InsertGuestyClientId" xml:space="preserve">
+        <value>Guesty client ID</value>
+    </data>
+    <data name="InsertGuestyClientSecret" xml:space="preserve">
+        <value>Guesty client secret</value>
     </data>
     <data name="Save" xml:space="preserve">
         <value>Save</value>

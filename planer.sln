@@ -38,9 +38,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagement", "Emplo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmployeeManagement.Contract", "EmployeeManagement.Contract\EmployeeManagement.Contract.csproj", "{2D8F7EE5-4B5E-4715-9C59-88A86F4935FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoobuManagement", "SmoobuManagement\SmoobuManagement.csproj", "{1E34CCF3-BE3E-4166-A371-077AFE257D92}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuestyManagement", "GuestyManagement\GuestyManagement.csproj", "{1E34CCF3-BE3E-4166-A371-077AFE257D92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmoobuManagement.Contract", "SmoobuManagement.Contract\SmoobuManagement.Contract.csproj", "{E5C67CD1-3046-4777-AFE0-A88DBDCC3454}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuestyManagement.Contract", "GuestyManagement.Contract\GuestyManagement.Contract.csproj", "{E5C67CD1-3046-4777-AFE0-A88DBDCC3454}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TagManagement", "TagManagement\TagManagement.csproj", "{D58ABDCB-3CB9-48FD-9D26-BDA36401E02C}"
 EndProject

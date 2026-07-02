@@ -11,7 +11,7 @@
       <ProjectReference Include="..\BookingAdditionManagement.Contract\BookingAdditionManagement.Contract.csproj" />
       <ProjectReference Include="..\DatabaseManagement.Contract\DatabaseManagement.Contract.csproj" />
       <ProjectReference Include="..\Datastoring.EfCore\Datastoring.EfCore.csproj" />
-      <ProjectReference Include="..\SmoobuManagement.Contract\SmoobuManagement.Contract.csproj" />
+      <ProjectReference Include="..\GuestyManagement.Contract\GuestyManagement.Contract.csproj" />
       <ProjectReference Include="..\TagManagement.Contract\TagManagement.Contract.csproj" />
     </ItemGroup>
 

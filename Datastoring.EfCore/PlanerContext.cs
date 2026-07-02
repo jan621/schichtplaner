@@ -2,7 +2,6 @@ using System.Security.Claims;
 using System.Text.Json;
 using CrossCutting.Entities;
 using CrossCutting.Entities.NotMapped;
-using CrossCutting.Entities.NotMapped.Smoobu;
 using CrossCutting.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
