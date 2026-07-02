@@ -119,20 +119,21 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
-        var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
-        await userManager.CreateBasicRolesAsync();
-
         var dataContext = scope.ServiceProvider.GetRequiredService<PlanerContext>();
         dataContext.Database.Migrate();
 
         var dataIdentityContext = scope.ServiceProvider.GetRequiredService<PlanerIdentityContext>();
         dataIdentityContext.Database.Migrate();
+
+        var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
+        await userManager.CreateBasicRolesAsync();
     }
-    catch
+    catch (Exception ex)
     {
-        //ignore
+        startupLogger.LogError(ex, "Database migration or role seeding failed on startup");
     }
 }
 
