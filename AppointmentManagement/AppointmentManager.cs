@@ -64,7 +64,7 @@ public class AppointmentManager(
         _tags = await tagManager.GetAllAsync();
         var calendarItems = new List<CustomCalendarItem>();
 
-        foreach (var booking in rootBooking.Bookings!)
+        foreach (var booking in rootBooking.Bookings ?? new List<Booking>())
         {
             note = bookingAdditions.FirstOrDefault(b => b.BookingId == booking.Id.ToString())?.Note ?? string.Empty;
             calendarItems.Add(new CustomCalendarItem()

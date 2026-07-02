@@ -95,8 +95,16 @@ else
         _loadingPage = true;
         StateHasChanged();
 
-        var smoobuCalendarItems = await AppointmentManager.GetAllWithSmoobuGroupedAsync();
-        _calendarItems = smoobuCalendarItems.ToList();
+        try
+        {
+            var smoobuCalendarItems = await AppointmentManager.GetAllWithSmoobuGroupedAsync();
+            _calendarItems = smoobuCalendarItems.ToList();
+        }
+        catch (Exception)
+        {
+            _calendarItems = new List<CustomCalendarItem>();
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        }
 
         _loadingPage = false;
     }

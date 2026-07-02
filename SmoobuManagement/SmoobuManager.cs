@@ -105,34 +105,49 @@ public class SmoobuManager(
             Bookings = new List<Booking>()
         };
 
-        for (var page = 1; page <= page_count; page++)
+        // Without an API key (not yet configured in the settings) there is
+        // nothing to fetch - the calendar then only shows local appointments.
+        var apiKey = await GetUserApiKeyAsync();
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return bookings;
+
+        try
         {
-            var getBookingsRequest = new HttpRequestMessage()
+            for (var page = 1; page <= page_count; page++)
             {
-                Method = HttpMethod.Get,
-                Headers =
+                var getBookingsRequest = new HttpRequestMessage()
                 {
-                    { "Api-Key", await GetUserApiKeyAsync() }
-                },
-            };
+                    Method = HttpMethod.Get,
+                    Headers =
+                    {
+                        { "Api-Key", apiKey }
+                    },
+                };
 
-            query["page"] = page.ToString();
-            uriBuilder.Query = query.ToString();
-            getBookingsRequest.RequestUri = uriBuilder.Uri;
+                query["page"] = page.ToString();
+                uriBuilder.Query = query.ToString();
+                getBookingsRequest.RequestUri = uriBuilder.Uri;
 
-            var getBookingsResponse = await httpClient.SendAsync(getBookingsRequest);
+                var getBookingsResponse = await httpClient.SendAsync(getBookingsRequest);
 
-            if (!getBookingsResponse.IsSuccessStatusCode)
-                return new RootBooking();
+                if (!getBookingsResponse.IsSuccessStatusCode)
+                    return bookings;
 
-            var currentBookings = await getBookingsResponse.Content.ReadFromJsonAsync<RootBooking>();
-            if (currentBookings == null || currentBookings.Bookings == null ||
-                !currentBookings.Bookings.Any())
-                break;
-            
-            page_count = (int)currentBookings.page_count!;
+                var currentBookings = await getBookingsResponse.Content.ReadFromJsonAsync<RootBooking>();
+                if (currentBookings == null || currentBookings.Bookings == null ||
+                    !currentBookings.Bookings.Any())
+                    break;
 
-            bookings.Bookings.AddRange(currentBookings.Bookings);
+                page_count = (int)currentBookings.page_count!;
+
+                bookings.Bookings.AddRange(currentBookings.Bookings);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            // Smoobu not reachable - show the calendar without bookings
+            // instead of failing the whole page.
+            return bookings;
         }
 
         bookings.Bookings.RemoveAll(b => b.IsBlockedBooking);
