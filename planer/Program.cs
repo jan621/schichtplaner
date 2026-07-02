@@ -16,6 +16,7 @@ using EmployeeManagement.Contract;
 using MailManagement;
 using MailManagement.Contract;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,18 @@ builder.Services.AddDbContext<PlanerIdentityContext>(options =>
         mySqlOptions => mySqlOptions.MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
 
 builder.Services.Configure<MailConfiguration>(builder.Configuration.GetSection("MailConfiguration"));
+
+// Persist auth-cookie encryption keys across restarts/deployments when a
+// directory is configured (e.g. a mounted volume on the hosting platform);
+// otherwise every deployment invalidates all logins.
+var dataProtectionKeysDir = Environment.GetEnvironmentVariable("DATA_PROTECTION_KEYS_DIR");
+if (!string.IsNullOrWhiteSpace(dataProtectionKeysDir))
+{
+    Directory.CreateDirectory(dataProtectionKeysDir);
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysDir))
+        .SetApplicationName("planer");
+}
 
 //AutoMapper
 var mapperConfig = new MapperConfiguration(cfg => { cfg.AddProfile(new AutoMapperProfile()); });
