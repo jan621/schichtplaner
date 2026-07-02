@@ -23,20 +23,17 @@ namespace Datastoring.EfCore.IdentityMigrations
                     constraints: table => { table.PrimaryKey("PK_Organization", x => x.Id); })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
-            migrationBuilder.InsertData(
-                table: "Organization",
-                columns: new[] { "Id", "Name" },
-                values: new object[] { "1", "TestOrganization" });
-
+            // Do not seed a test organization here: a later migration
+            // (AddOrganizationLeader) adds a LeaderId FK whose hardcoded
+            // default user only existed on the original dev database, so any
+            // seeded row breaks migrations on a fresh database. Organizations
+            // are created by the app itself on sign-up.
             migrationBuilder.AddColumn<string>(
                     name: "OrganizationId",
                     table: "AspNetUsers",
                     type: "VARCHAR(255)",
                     nullable: false)
                 .Annotation("MySql:CharSet", "utf8mb4");
-
-
-            migrationBuilder.Sql("UPDATE planer_identity_db.AspNetUsers SET OrganizationId = 1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_OrganizationId",

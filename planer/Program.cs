@@ -16,6 +16,7 @@ using EmployeeManagement.Contract;
 using MailManagement;
 using MailManagement.Contract;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor;
@@ -38,8 +39,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddMudServices();
 
+// Distinct migrations history tables so both contexts can share a single
+// database (e.g. the one MySQL instance provided by Railway).
 builder.Services.AddDbContext<PlanerContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("PlanerContext"), ServerVersion.Parse("8.0.34-mysql")));
+    options.UseMySql(builder.Configuration.GetConnectionString("PlanerContext"), ServerVersion.Parse("8.0.34-mysql"),
+        mySqlOptions => mySqlOptions.MigrationsHistoryTable("__EFMigrationsHistory_Planer")));
 
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
@@ -47,7 +51,8 @@ builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfi
 
 builder.Services.AddDbContext<PlanerIdentityContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("PlanerIdentityContext"),
-        ServerVersion.Parse("8.0.34-mysql")));
+        ServerVersion.Parse("8.0.34-mysql"),
+        mySqlOptions => mySqlOptions.MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
 
 builder.Services.Configure<MailConfiguration>(builder.Configuration.GetSection("MailConfiguration"));
 
@@ -142,6 +147,16 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+// Honor X-Forwarded-* headers when running behind a hosting proxy (Railway,
+// nginx, ...) so the app knows the original scheme is https.
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseAuthentication();
 app.UseAuthorization();

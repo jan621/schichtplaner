@@ -12,11 +12,10 @@ namespace Datastoring.EfCore.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "User");
-            
-            migrationBuilder.DropTable(
-                name: "Teams");
+            // These tables only existed on the original dev database; a fresh
+            // database never has them, so the drops must be conditional.
+            migrationBuilder.Sql("DROP TABLE IF EXISTS `User`;");
+            migrationBuilder.Sql("DROP TABLE IF EXISTS `Teams`;");
 
             migrationBuilder.AlterColumn<string>(
                 name: "UpdatedBy",
