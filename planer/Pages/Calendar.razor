@@ -1,0 +1,133 @@
+@page "/calendar"
+
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Language
+@using SmoobuManagement.Contract
+@using CrossCutting.DataObjects
+@using planer.Dialogs.Appointment
+@using AppointmentManagement.Contract
+@using planer.Dialogs.Employee
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ISmoobuManager SmoobuManager;
+@inject IDialogService DialogService;
+@inject ISnackbar SnackBar;
+@inject IAppointmentManager AppointmentManager;
+@inject IJSRuntime JSRuntime
+
+<style>
+.mud-cal-time-cell {
+  visibility: hidden;
+}
+</style>
+
+<PageTitle>@Localizer["Calendar"]</PageTitle>
+
+@if (_loadingPage)
+{
+    <MudStack Spacing="15">
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+    </MudStack>
+}
+else
+{
+    <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudButton OnClick="@AddAppointmentAsync" Variant="Variant.Outlined" Color="Color.Success">@Localizer["AddAppointment"]</MudButton>
+    </MudStack>
+    <MudCalendar Items="_calendarItems" ShowDay="@_isMobile" ShowMonth="false" ShowWeek="@(!_isMobile)" DayCellHeight="65" DayStartTime="TimeOnly.MinValue"
+                 ButtonVariant="Variant.Outlined" EnableDragItems="false" ItemClicked="AppointmentClicked">
+        <WeekTemplate>
+            <div class="ms-1 me-1" style="background: white; border: 2px solid @(((CustomCalendarItem)context).Color); border-radius: 7px;">
+                <MudStack Spacing="0">
+                    <div style="background-color: @(((CustomCalendarItem)context).Color)">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Style="color: #ffffff;" Typo="Typo.body1" Align="Align.Start">@(((CustomCalendarItem)context).Tag.Name)</MudText>
+                            <MudBadge Visible="@(!string.IsNullOrEmpty(((CustomCalendarItem)context).Note))" Icon="@Icons.Material.Filled.PriorityHigh" Color="Color.Warning" Overlap="true" Bordered="false" Class="my-2 mx-2"/>
+                        </MudStack>
+                    </div>
+                    <div class="pa-2">
+                        <MudText Typo="Typo.body2" Align="Align.Start">@context.Text</MudText>
+                    </div>
+                    @if (((CustomCalendarItem)context).FutureGuestsCount != -1)
+                    {
+                        <div class="pa-2">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudStack AlignItems="AlignItems.End" Row="true">
+                                    <MudIcon Icon="@Icons.Material.Filled.Apartment"/>
+                                    <MudText Typo="Typo.body2" Align="Align.End">@(((CustomCalendarItem)context).GuestsCount)</MudText>
+                                </MudStack>
+
+                                <MudStack AlignItems="AlignItems.End" Row="true">
+                                    <MudIcon Icon="@Icons.Material.Filled.People"/>
+                                    <MudText Typo="Typo.body2" Align="Align.End">@(((CustomCalendarItem)context).FutureGuestsCount)</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </div>
+                    }
+                </MudStack>
+
+            </div>
+        </WeekTemplate>
+    </MudCalendar>
+}
+
+@code {
+    private List<CustomCalendarItem> _calendarItems = new();
+    private bool _loadingPage = true;
+    private bool _isMobile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCalendarAsync();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _isMobile = await JSRuntime.InvokeAsync<bool>("isSmallScreen");
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task LoadCalendarAsync()
+    {
+        _loadingPage = true;
+        StateHasChanged();
+
+        var smoobuCalendarItems = await AppointmentManager.GetAllWithSmoobuGroupedAsync();
+        _calendarItems = smoobuCalendarItems.ToList();
+
+        _loadingPage = false;
+    }
+
+    private async Task AddAppointmentAsync(MouseEventArgs arg)
+    {
+        var parameters = new DialogParameters<AddEditAppointmentDialog>();
+        var dialog = await DialogService.ShowAsync<AddEditAppointmentDialog>(@Localizer["AddAppointment"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled)
+        {
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            await LoadCalendarAsync();
+            return;
+        }
+
+        if (dialogResult.Data is true)
+            SnackBar.Add(Localizer["SuccessfullyAddedAppointment"], Severity.Success);
+        await LoadCalendarAsync();
+    }
+
+    private async Task AppointmentClicked(CalendarItem calendarItem)
+    {
+        var customCalendarItem = calendarItem as CustomCalendarItem;
+        var parameters = new DialogParameters<EditBookingAdditionDialog>();
+        parameters.Add(x => x.BookingId, customCalendarItem.BookingId);
+
+        var dialog = await DialogService.ShowAsync<EditBookingAdditionDialog>(@Localizer["ModifyAppointment"], parameters);
+        await dialog.Result;
+        await LoadCalendarAsync();
+    }
+
+}

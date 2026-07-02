@@ -1,0 +1,108 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities
+@using EmployeeManagement.Contract
+@using BookingAdditionManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject IEmployeeManager EmployeeManager;
+@inject IBookingAdditionManager BookingAdditionManager;
+@inject ISnackbar SnackBar;
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <!--Name + Color-->
+                <MudItem sm="7" xs="12">
+                    <MudTextField Label="@Localizer["Note"]" Variant="Variant.Outlined" @bind-Value="_bookingAddition.Note"/>
+                </MudItem>
+                <MudItem sm="5" xs="12">
+                    <MudSelect T="User" Label="@Localizer["Employees"]" MultiSelection="true"
+                               @bind-SelectedValues="_selectedEmployees">
+                        @foreach (var employee in _employees)
+                        {
+                            <MudSelectItem T="User" Value="@employee">
+                                @employee.FullName
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <!---->
+            </MudGrid>
+
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="!_valid" Color="Color.Success"
+                   OnClick="@AddEditAppointmentEmployee">
+            @Localizer["ModifyAppointment"]
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public required string BookingId { get; set; }
+
+    private IEnumerable<User> _selectedEmployees = new List<User>();
+    private IEnumerable<User> _employees = new List<User>();
+
+    private BookingAddition _bookingAddition = new()
+    {
+        Id = string.Empty,
+        BookingId = string.Empty,
+        Note = string.Empty,
+        Employees = new List<User>()
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var dbBookingAdditions = await BookingAdditionManager.GetAllAsync();
+        _bookingAddition = dbBookingAdditions.FirstOrDefault(b => b.BookingId == BookingId)
+                           ?? new()
+                           {
+                               Id = string.Empty,
+                               BookingId = BookingId,
+                               Note = string.Empty,
+                               Employees = new List<User>()
+                           };
+
+        if (dbBookingAdditions.Any())
+            _selectedEmployees = _bookingAddition.Employees;
+
+        var dbEmployees = await EmployeeManager.GetAllAsync();
+        _employees = dbEmployees;
+        await base.OnInitializedAsync();
+    }
+
+    async Task AddEditAppointmentEmployee()
+    {
+        if (_selectedEmployees != null)
+            _bookingAddition.Employees = _selectedEmployees.ToList();
+
+        if (string.IsNullOrEmpty(_bookingAddition.CreatedBy))
+        {
+            var added = await BookingAdditionManager.CreateAsync(_bookingAddition);
+
+            if (!added)
+                SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        }
+        else
+        {
+            var updated = await BookingAdditionManager.UpdateAsync(_bookingAddition);
+
+            if (!updated)
+                SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        }
+
+        SnackBar.Add(Localizer["SuccessfullyModifiedAppointment"], Severity.Success);
+        MudDialog.Close(true);
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    private bool _valid;
+}

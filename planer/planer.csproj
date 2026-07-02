@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="12.0.1" />
+      <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+      <PackageReference Include="Blazored.LocalStorage" Version="4.4.0" />
+      <PackageReference Include="Heron.MudCalendar" Version="1.1.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.14" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.14">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="MudBlazor" Version="6.12.0" />
+      <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AppointmentManagement.Contract\AppointmentManagement.Contract.csproj" />
+      <ProjectReference Include="..\AppointmentManagement\AppointmentManagement.csproj" />
+      <ProjectReference Include="..\BookingAdditionManagement.Contract\BookingAdditionManagement.Contract.csproj" />
+      <ProjectReference Include="..\BookingAdditionManagement\BookingAdditionManagement.csproj" />
+      <ProjectReference Include="..\CrossCutting\CrossCutting.csproj" />
+      <ProjectReference Include="..\DatabaseManagement.Contract\DatabaseManagement.Contract.csproj" />
+      <ProjectReference Include="..\DatabaseManagement\DatabaseManagement.csproj" />
+      <ProjectReference Include="..\Datastoring.EfCore\Datastoring.EfCore.csproj" />
+      <ProjectReference Include="..\EmployeeManagement.Contract\EmployeeManagement.Contract.csproj" />
+      <ProjectReference Include="..\EmployeeManagement\EmployeeManagement.csproj" />
+      <ProjectReference Include="..\MailManagement.Contract\MailManagement.Contract.csproj" />
+      <ProjectReference Include="..\MailManagement\MailManagement.csproj" />
+      <ProjectReference Include="..\OrganizationManagement.Contract\OrganizationManagement.Contract.csproj" />
+      <ProjectReference Include="..\OrganizationManagement\OrganizationManagement.csproj" />
+      <ProjectReference Include="..\SmoobuManagement.Contract\SmoobuManagement.Contract.csproj" />
+      <ProjectReference Include="..\SmoobuManagement\SmoobuManagement.csproj" />
+      <ProjectReference Include="..\TagManagement.Contract\TagManagement.Contract.csproj" />
+      <ProjectReference Include="..\TagManagement\TagManagement.csproj" />
+      <ProjectReference Include="..\TeamManagement.Contract\TeamManagement.Contract.csproj" />
+      <ProjectReference Include="..\TeamManagement\TeamManagement.csproj" />
+      <ProjectReference Include="..\TimeTrackingManagement.Contract\TimeTrackingManagement.Contract.csproj" />
+      <ProjectReference Include="..\TimeTrackingManagement\TimeTrackingManagement.csproj" />
+      <ProjectReference Include="..\UserManagement.Contract\UserManagement.Contract.csproj" />
+      <ProjectReference Include="..\UserManagement\UserManagement.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\css\bootstrap\bootstrap.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\css\bootstrap\bootstrap.min.css.map" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\" />
+      <Folder Include="wwwroot\css\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Resources\Zeiterfassung.xlsx">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+</Project>

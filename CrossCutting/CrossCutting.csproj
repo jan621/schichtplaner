@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="12.0.1" />
+      <PackageReference Include="Heron.MudCalendar" Version="1.1.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.14" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="7.0.14" />
+      <PackageReference Include="MudBlazor" Version="6.12.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="Language\Language.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>Language.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Language\Language.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Language.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.Identity.Stores">
+        <HintPath>..\..\..\..\.nuget\packages\microsoft.aspnetcore.app.ref\8.0.0\ref\net8.0\Microsoft.Extensions.Identity.Stores.dll</HintPath>
+      </Reference>
+      <Reference Include="MudBlazor">
+        <HintPath>..\..\..\..\.nuget\packages\mudblazor\6.12.0\lib\net8.0\MudBlazor.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>

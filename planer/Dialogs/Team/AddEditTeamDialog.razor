@@ -1,0 +1,49 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities
+
+@inject IStringLocalizer<Language> Localizer;
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <!--Team name-->
+            <MudTextField Label="@Localizer["TeamName"]" Variant="Variant.Outlined" @bind-Value="_team.Name"
+                          Required="true" RequiredError="@Localizer["FieldIsRequired"]"/>
+            <!---->
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="!_valid" Color="Color.Success"
+                   OnClick="@AddEditTeam">
+            @(EditMode ? Localizer["EditTeam"] : Localizer["AddTeam"])
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public bool EditMode { get; set; }
+
+    [Parameter] public Team? TeamToEdit { get; set; }
+
+    private Team _team = new Team
+    {
+        Name = string.Empty,
+        Members = new List<User>()
+    };
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (EditMode)
+            _team = TeamToEdit;
+    }
+
+    void AddEditTeam() => MudDialog.Close(DialogResult.Ok(_team));
+    void Cancel() => MudDialog.Cancel();
+
+    private bool _valid;
+}

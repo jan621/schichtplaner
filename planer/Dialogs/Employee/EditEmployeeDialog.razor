@@ -1,0 +1,130 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities.NotMapped
+@using CrossCutting.Identity
+@using CrossCutting.Enums
+@using Microsoft.AspNetCore.Identity
+@using TeamManagement.Contract
+@using UserManagement.Contract
+@using CrossCutting.Entities
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ITeamManager TeamManager;
+@inject ISnackbar Snackbar;
+@inject UserManager<User> IdentityUserManager;
+
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <!--Email - Roles-->
+                <MudItem xs="12" sm="9">
+                    <MudSelect T="Team" Label="@Localizer["Teams"]" MultiSelection="true" @bind-Value="_team" @bind-SelectedValues="@SelectedTeams"
+                               Required="true" Clearable="true" RequiredError="@Localizer["FieldIsRequired"]">
+                        @foreach (var team in _teams)
+                        {
+                            <MudSelectItem T="Team" Value="@team">@team.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="3">
+                    <MudSelect Label="@Localizer["Roles"]" @bind-Value="SelectedRole">
+                        <MudSelectItem Value="Role.Employee">@Localizer[Role.Employee.ToString()]</MudSelectItem>
+                        <MudSelectItem Value="Role.Management">@Localizer[Role.Management.ToString()]</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <!---->
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel" Class="mt-2">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="@(!_valid || Loading)" Color="Color.Success" OnClick="@ModifyEmployee" Class="mt-2">
+            @if (Loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+            }
+            else
+            {
+                <MudText>@Localizer["ModifyEmployee"]</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public required User Employee { get; set; }
+
+    private bool _valid;
+    public bool Loading;
+    public Role SelectedRole { get; set; } = Role.Employee;
+
+    private Team _team = new()
+    {
+        Name = string.Empty,
+        Members = new List<User>()
+    };
+
+    public IEnumerable<Team> SelectedTeams { get; set; } = new HashSet<Team>();
+    private IEnumerable<Team> _teams = new List<Team>();
+    private string _employeeRole;
+
+    private EditEmployeeRequest _editEmployeeRequest = new()
+    {
+        Employee = null!,
+        Teams = null!,
+        Role = Role.Employee
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        //Get employee role
+        var employeeRoles = await IdentityUserManager.GetRolesAsync(Employee);
+        Enum.TryParse(employeeRoles.Single(), true, out Role employeeRole);
+        SelectedRole = employeeRole;
+        _employeeRole = employeeRoles.Single();
+        //---
+
+        _teams = await TeamManager.GetAllAsync();
+        SelectedTeams = Employee.Teams ?? new List<Team>();
+
+        _editEmployeeRequest.Employee = IdentityUserManager.Users.Single(u => u.Id ==  Employee.Id);
+;
+        _editEmployeeRequest.Teams = Employee.Teams ?? throw new InvalidOperationException("Employee has no teams");
+    }
+
+    private async Task ModifyEmployee()
+    {
+        Loading = true;
+        _editEmployeeRequest.Teams = SelectedTeams.ToList();
+        _editEmployeeRequest.Role = SelectedRole;
+
+        _editEmployeeRequest.Employee.Teams = SelectedTeams.ToList();
+        var isInRole = await IdentityUserManager.IsInRoleAsync(_editEmployeeRequest.Employee, SelectedRole.ToString());
+        if (!isInRole)
+        {
+            await IdentityUserManager.RemoveFromRoleAsync(_editEmployeeRequest.Employee, _employeeRole);
+            await IdentityUserManager.AddToRoleAsync(_editEmployeeRequest.Employee, SelectedRole.ToString());
+        }
+
+        var updated = await IdentityUserManager.UpdateAsync(_editEmployeeRequest.Employee);
+        Loading = false;
+        
+        if (updated.Succeeded)
+        {
+            Snackbar.Add(Localizer["EmployeeModifiedSuccessfully"], Severity.Success);
+            MudDialog.Close();
+        }
+        else
+            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

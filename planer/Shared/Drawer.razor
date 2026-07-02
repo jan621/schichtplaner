@@ -1,0 +1,16 @@
+<MudDrawer Fixed="true"
+           Elevation="0"
+           Overlay="false"
+           ClipMode="DrawerClipMode.Always"
+           MiniWidth="72px"
+           Variant="DrawerVariant.Mini"
+           @bind-Open="@DrawerOpen">
+    <NavMenu/>
+    <MudDivider/>
+    <UserCard/>
+</MudDrawer>
+
+@code
+{
+    [Parameter] public required bool DrawerOpen { get; set; }
+}

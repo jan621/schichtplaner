@@ -1,0 +1,26 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+
+@inject IStringLocalizer<Language> Localizer;
+
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="Cancel">@Localizer["No"]</MudButton>
+        <MudButton Color="@Color.Success" Variant="Variant.Outlined" OnClick="Submit">@Localizer["Yes"]</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public required string ContentText { get; set; }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

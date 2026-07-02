@@ -1,0 +1,257 @@
+@page "/tags"
+
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using planer.Dialogs
+@using CrossCutting.Entities
+@using planer.Dialogs.Tag
+@using TagManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject IConfiguration Configuration;
+@inject ISnackbar Snackbar;
+@inject IDialogService DialogService;
+@inject ITagManager TagManager;
+@inject IJSRuntime JsRuntime;
+
+<PageTitle>@Localizer["ViewTags"]</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6" Class="mb-4">@Localizer["Tag"]</MudText>
+        <MudStack Row="@(!_isMobile)" Justify="Justify.SpaceBetween" Style="width: 100%" Class="mb-4">
+            <MudTextField T="string" ValueChanged="@(s => OnSearch(s))"
+                          Placeholder=@Localizer["SearchPlaceHolder"]
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium">
+            </MudTextField>
+            
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Success"
+                       Variant="Variant.Outlined" OnClick="@AddTag">
+                @Localizer["AddTag"]
+            </MudButton>
+        </MudStack>
+
+        @if (_selectedTags.Any())
+        {
+            <MudStack Row="@(!_isMobile)" Style="width: 100%"
+                      Justify="@(_isMobile ? Justify.Center : Justify.FlexEnd)">
+
+                @if (_selectedTags.Count == 1)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Edit" Color="Color.Warning"
+                               Variant="Variant.Outlined" OnClick="@EditTag">
+                        @Localizer["ModifyTag"]
+                    </MudButton>
+                }
+
+                <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                           Variant="Variant.Outlined" OnClick="@DeleteTagg">
+                    @Localizer["DeleteTag"]
+                </MudButton>
+            </MudStack>
+        }
+        
+        <MudTable @ref="_table" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm" FixedHeader="true"
+                  Height="@Configuration["Settings:TableHeight"]" MultiSelection="true"
+                  GroupHeaderStyle="background-color:var(--mud-palette-background-grey)"
+                  @bind-SelectedItems="@_selectedTags"
+                  GroupFooterClass="mb-4" Elevation="3"
+                  ServerData="@(new Func<TableState, Task<TableData<Tag>>>(ServerReload))">
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="tagName_field" T="Tag">@Localizer["Name"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="tag_ColorHexCode_field"
+                                       T="Tag">@Localizer["Color"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="tag_isNonAccommodation" T="Tag">
+                        @Localizer["IsNonAccommodation"]
+                    </MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="tag_isNonAccommodation" T="Tag">
+                        @Localizer["Move"]
+                    </MudTableSortLabel>
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @context.Name
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Name">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @context.ColorHexCode
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Name">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @if (context.IsNonAccommodation)
+                        {
+                            <MudChip Variant="Variant.Outlined" Color="Color.Success">@Localizer["Yes"]</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip Variant="Variant.Outlined" Color="Color.Warning">@Localizer["No"]</MudChip>
+                        }
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Name">
+                    <MudStack AlignItems="AlignItems.Start" Row="true">
+                        <MudIconButton OnClick="@(async () => await MoveTagIndex(context, true))"
+                                       Variant="Variant.Outlined" Icon="@Icons.Material.Filled.ArrowUpward">
+                        </MudIconButton>
+                        <MudIconButton OnClick="@(async () => await MoveTagIndex(context, false))"
+                                       Variant="Variant.Outlined" Icon="@Icons.Material.Filled.ArrowDownward">
+                        </MudIconButton>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> _authenticationStateTask { get; set; }
+
+    private MudTable<Tag> _table = new();
+    private IEnumerable<Tag> _tags = new List<Tag>();
+    private HashSet<Tag> _selectedTags = new HashSet<Tag>();
+    private string _searchString = string.Empty;
+
+    private bool _isMobile;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _isMobile = await JsRuntime.InvokeAsync<bool>("isSmallScreen");
+        StateHasChanged();
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async Task<TableData<Tag>> ServerReload(TableState state)
+    {
+        _selectedTags.Clear();
+        var tags = await TagManager.GetAllAsync();
+        tags = tags.OrderByDescending(t => t.SortIndex);
+        var totalCount = tags.Count();
+
+        if (tags == Enumerable.Empty<Tag>())
+            Snackbar.Add(Localizer["ErrorLoadingData"], Severity.Error);
+
+        if (string.IsNullOrWhiteSpace(_searchString))
+        {
+            if (tags.Any())
+            {
+                switch (state.SortLabel)
+                {
+                    case "tagName_field":
+                        tags = tags.OrderByDirection(state.SortDirection, t => t.Name);
+                        break;
+                    case "tag_ColorHexCode_field":
+                        tags = tags.OrderByDirection(state.SortDirection, t => t.ColorHexCode);
+                        break;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchString) || !tags.Any())
+        {
+            _tags = tags;
+            return new TableData<Tag>() { TotalItems = totalCount, Items = tags };
+        }
+
+        tags = tags.Where(x =>
+        {
+            if (x.Id.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        });
+
+        _tags = tags;
+
+        return new TableData<Tag>() { TotalItems = totalCount, Items = tags };
+    }
+
+    private async void OnSearch(string text)
+    {
+        _searchString = text;
+        await _table.ReloadServerData();
+    }
+
+    private async Task EditTag(MouseEventArgs obj)
+    {
+        var parameters = new DialogParameters<AddEditTagDialog>();
+        parameters.Add(x => x.EditMode, true);
+        parameters.Add(x => x.TagToEdit, _selectedTags.First());
+        var dialog = await DialogService.ShowAsync<AddEditTagDialog>(@Localizer["ModifyTag"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled) return;
+
+        var added = await TagManager.UpdateAsync(dialogResult.Data as Tag
+                                                 ?? throw new Exception("No tag available"));
+
+        if (!added)
+            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        Snackbar.Add(Localizer["SuccessfullyModifiedTag"], Severity.Success);
+        await _table.ReloadServerData();
+    }
+
+    private async Task AddTag(MouseEventArgs arg)
+    {
+        var parameters = new DialogParameters<AddEditTagDialog>();
+        parameters.Add(x => x.EditMode, false);
+
+        var dialog = await DialogService.ShowAsync<AddEditTagDialog>(@Localizer["AddTag"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled) return;
+
+        var added = await TagManager.CreateAsync(dialogResult.Data as Tag
+                                                 ?? throw new Exception("No tag available"));
+
+        if (!added)
+            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        Snackbar.Add(Localizer["SuccessfullyAddedTag"], Severity.Success);
+        await _table.ReloadServerData();
+    }
+
+    private async Task DeleteTagg()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToDeleteTags"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["DeleteTags"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled) return;
+
+        foreach (var tag in _selectedTags)
+        {
+            var deleted = await TagManager.DeleteAsync(tag);
+
+            if (deleted) continue;
+
+            Snackbar.Add(Localizer["ErrorOccurred", Severity.Error]);
+            break;
+        }
+
+        Snackbar.Add(Localizer["SuccessfullyDeletedEntries"], Severity.Success);
+        await _table.ReloadServerData();
+    }
+
+    async Task MoveTagIndex(Tag tag, bool upwards)
+    {
+        await TagManager.UpdateSortIndex(_tags.ToList(), tag, upwards);
+        await _table.ReloadServerData();
+    }
+
+}

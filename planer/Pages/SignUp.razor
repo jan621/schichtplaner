@@ -1,0 +1,209 @@
+@page "/signUp"
+
+@using System.ComponentModel.DataAnnotations
+@using System.Net
+@using System.Text.RegularExpressions
+@using CrossCutting.Enums
+@using CrossCutting.Identity
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using planer.Dialogs
+@using UserManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ISnackbar Snackbar;
+@inject IUserManager UserManager;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>@Localizer["SignUp"]</PageTitle>
+
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.Small">
+    <MudCard>
+        <MudCardContent>
+            <MudForm @bind-IsValid="@_valid">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center">
+                            <MudText Typo="Typo.h4">@Localizer["SignUp"]</MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center">
+                            <MudText>@Localizer["InsertData"]</MudText>
+                        </div>
+                    </MudItem>
+
+                    <!--Firstname - Lastname-->
+                    <MudItem sm="6" xs="12">
+                        <MudTextField T="string" Label="@Localizer["FirstName"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.FirstName" Required="true"
+                                      RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+
+                    <MudItem sm="6" xs="12">
+                        <MudTextField T="string" Label="@Localizer["LastName"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.LastName" Required="true"
+                                      RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+                    <!---->
+
+                    <!--Email - CompanyName-->
+                    <MudItem sm="6" xs="12">
+                        <MudTextField T="string" Label="@Localizer["Email"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.Email" Required="true"
+                                      RequiredError="@Localizer["FieldIsRequired"]"
+                                      Validation="@(new EmailAddressAttribute() { ErrorMessage = @Localizer["EmailIsInvalid"] })"/>
+                    </MudItem>
+
+                    <MudItem sm="6" xs="12">
+                        <MudTextField T="string" Label="@Localizer["CompanyName"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.CompanyName" Required="true"
+                                      RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+                    <!---->
+
+                    <!--Password - RePeatPassword-->
+                    <MudItem sm="6" xs="12">
+                        <MudTextField Label="@Localizer["Password"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.Password"
+                                      InputType="@_passwordInputType" Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))"
+                                      Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility"
+                                      Required="true" RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+
+                    <MudItem sm="6" xs="12">
+                        <MudTextField Label="@Localizer["RePeatPassword"]" Variant="Variant.Outlined" @bind-Value="_signUpRequest.RePeatPassword"
+                                      InputType="@_passwordInputType" Validation="@(new Func<string, string>(PasswordMatch))"
+                                      Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility"
+                                      Required="true" RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+                    <!---->
+
+                    <MudItem xs="12" Class="d-flex justify-center">
+                        <MudButton Variant="Variant.Outlined" Disabled="@(!_valid || _loading)" Color="Color.Primary"
+                                   Size="Size.Large" Style="width: 100%;" OnClick="Register">
+                            @if (_loading)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                                <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                            }
+                            else
+                            {
+                                <MudText>@Localizer["SignUp"]</MudText>
+                            }
+                        </MudButton>
+                    </MudItem>
+
+                    <MudItem xs="12" Class="d-flex justify-center">
+                        <MudButton OnClick="RedirectToSignIn" Color="Color.Primary">@Localizer["AlreadyHaveAccount"]</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> _authenticationStateTask { get; set; }
+
+    private InputType _passwordInputType = InputType.Password;
+
+    private bool _valid;
+    private bool _rememberMe;
+    private bool _passwordVisibility;
+    private bool _loading;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    private SignUpRequest _signUpRequest;
+
+    protected override void OnInitialized()
+    {
+        _signUpRequest = new()
+        {
+            Email = string.Empty,
+            FirstName = string.Empty,
+            LastName = string.Empty,
+            Password = string.Empty,
+            RePeatPassword = string.Empty,
+            CompanyName = string.Empty,
+            Role = Role.Administrator
+        };
+
+        base.OnInitialized();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await _authenticationStateTask;
+
+        if (authenticationState.User.Identity != null &&
+            authenticationState.User.Identity.IsAuthenticated)
+            NavigationManager.NavigateTo("/calendar");
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task Register(MouseEventArgs arg)
+    {
+        _loading = true;
+        try
+        {
+            await UserManager.CreateUser(_signUpRequest);
+            NavigationManager.NavigateTo("/");
+            Snackbar.Add(Localizer["SuccessfullySignedUp"], Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            _loading = false;
+        }
+
+        _loading = false;
+    }
+
+    void TogglePasswordVisibility()
+    {
+        if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInputType = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInputType = InputType.Text;
+        }
+    }
+    
+    private IEnumerable<string> PasswordStrength(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            yield return "Password is required!";
+            yield break;
+        }
+        
+        if (password.Length < 8)
+            yield return Localizer["PasswordMinLength"];
+        if (!Regex.IsMatch(password, @"[A-Z]"))
+            yield return Localizer["PasswordMinOneCapitalLetter"];
+        if (!Regex.IsMatch(password, @"[a-z]"))
+            yield return Localizer["PasswordMinOneLowerCaseLetter"];
+        if (!Regex.IsMatch(password, @"[0-9]"))
+            yield return Localizer["PasswordNeedOneDigit"];
+        if (!Regex.IsMatch(password, @"[!@#$%^&*(),.?""'{}[\]:;<>/\\|_~`+=-]"))
+            yield return Localizer["PasswordMinOneAlphanumericCharacter"];
+    }
+
+    string PasswordMatch(string password)
+    {
+        if (_signUpRequest.Password != password)
+            return Localizer["PasswordDontMatch"];
+
+        return string.Empty;
+    }
+    
+    void RedirectToSignIn()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

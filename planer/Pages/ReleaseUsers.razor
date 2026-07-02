@@ -1,0 +1,211 @@
+@page "/releaseUsers"
+
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities.NotMapped
+@using CrossCutting.Enums
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using planer.Dialogs
+@using UserManagement.Contract
+@using CrossCutting.Entities
+
+@inject IStringLocalizer<Language> Localizer;
+@inject IConfiguration Configuration;
+@inject ISnackbar Snackbar;
+@inject UserManager<User> UserManager;
+@inject IDialogService DialogService;
+@inject IUserManager CustomUserManager;
+@inject IJSRuntime JsRuntime;
+
+<PageTitle>@Localizer["ReleaseUsers"]</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6" Class="mb-4">@Localizer["User"]</MudText>
+
+        <MudStack Row="@(!_isMobile)" Justify="Justify.SpaceBetween" Style="width: 100%" Class="mb-4">
+
+            <MudTextField T="string" ValueChanged="@(s => OnSearch(s))" Placeholder=@Localizer["SearchPlaceHolder"]
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium">
+            </MudTextField>
+
+            @if (_selectedUsers.Any())
+            {
+                <MudButton Color="Color.Success" Variant="Variant.Outlined"
+                           OnClick="@ReleaseUser">@Localizer["ReleaseUser"]</MudButton>
+            }
+        </MudStack>
+
+        <MudTable @ref="_table" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm" FixedHeader="true"
+                  @bind-SelectedItems="_selectedUsers" Height="@Configuration["Settings:TableHeight"]"
+                  GroupHeaderStyle="background-color:var(--mud-palette-background-grey)"
+                  SelectOnRowClick="true" MultiSelection="true"
+                  GroupFooterClass="mb-4" Elevation="3"
+                  ServerData="@(new Func<TableState, Task<TableData<User>>>(ServerReload))">
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="userId_field" T="User">@Localizer["Id"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="userCompanyName_field"
+                                       T="User">@Localizer["CompanyName"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="userFullName_field" T="User">@Localizer["Name"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="userEmail_field" T="User">@Localizer["Email"]</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortLabel="userEmailConfirmed_field"
+                                       T="User">@Localizer["EmailConfirmed"]</MudTableSortLabel>
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Content">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @context.Organization.Name
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Content">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @context.FullName
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Content">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @context.Email
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Content">
+                    <div style="max-height: @Configuration["Settings:TableScrollAt"]; overflow-y:scroll">
+                        @if (context.EmailConfirmed)
+                        {
+                            <MudChip Variant="Variant.Outlined" Color="Color.Success">@Localizer["Confirmed"]</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip Variant="Variant.Outlined" Color="Color.Error">@Localizer["NotConfirmed"]</MudChip>
+                        }
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> _authenticationStateTask { get; set; }
+
+    private MudTable<User> _table = new();
+    private HashSet<User> _selectedUsers = new HashSet<User>();
+    private string _searchString = string.Empty;
+
+    private bool _isMobile;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _isMobile = await JsRuntime.InvokeAsync<bool>("isSmallScreen");
+        StateHasChanged();
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task ReleaseUser()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToDeleteEmployees"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["ReleaseUser"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (!dialogResult.Canceled)
+        {
+            await CustomUserManager.ReleaseUsers(_selectedUsers);
+            Snackbar.Add(Localizer["ReleasedUsers"], Severity.Success);
+            await _table.ReloadServerData();
+        }
+    }
+
+    public async Task<TableData<User>> ServerReload(TableState state)
+    {
+        _selectedUsers.Clear();
+        var users = new List<User>();
+
+        var dbUsers = UserManager.Users
+            .Include(u => u.Organization)
+            .Where(u => !u.Activated)
+            .ToList();
+
+        foreach (var user in dbUsers)
+        {
+            if (await UserManager.IsInRoleAsync(user, Role.Administrator.ToString()))
+            {
+                users.Add(user);
+            }
+        }
+
+        var totalCount = users.Count();
+
+        if (users == Enumerable.Empty<User>())
+            Snackbar.Add(Localizer["ErrorLoadingData"], Severity.Error);
+
+        if (string.IsNullOrWhiteSpace(_searchString))
+        {
+            if (users.Any())
+            {
+                switch (state.SortLabel)
+                {
+                    case "userId_field":
+                        users = users.OrderByDirection(state.SortDirection, u => u.Id).ToList();
+                        break;
+                    case "userCompanyName_field":
+                        users = users.OrderByDirection(state.SortDirection, u => u.Organization.Name).ToList();
+                        break;
+                    case "userFullName_field":
+                        users = users.OrderByDirection(state.SortDirection, u => u.FullName).ToList();
+                        break;
+                    case "userEmail_field":
+                        users = users.OrderByDirection(state.SortDirection, u => u.Email).ToList();
+                        break;
+                    case "userEmailConfirmed_field":
+                        users = users.OrderByDirection(state.SortDirection, u => u.EmailConfirmed).ToList();
+                        break;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchString) || !users.Any())
+        {
+            return new TableData<User>() { TotalItems = totalCount, Items = users };
+        }
+
+        users = users.Where(x =>
+        {
+            if (x.Id.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.FullName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.EmailConfirmed.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.Organization.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            return false;
+        }).ToList();
+
+        return new TableData<User>() { TotalItems = totalCount, Items = users };
+    }
+
+    private async void OnSearch(string text)
+    {
+        _searchString = text;
+        await _table.ReloadServerData();
+    }
+
+}
+
+}

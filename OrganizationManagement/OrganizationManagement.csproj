@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DatabaseManagement.Contract\DatabaseManagement.Contract.csproj" />
+      <ProjectReference Include="..\Datastoring.EfCore\Datastoring.EfCore.csproj" />
+      <ProjectReference Include="..\OrganizationManagement.Contract\OrganizationManagement.Contract.csproj" />
+      <ProjectReference Include="..\UserManagement.Contract\UserManagement.Contract.csproj" />
+    </ItemGroup>
+
+</Project>

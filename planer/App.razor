@@ -1,0 +1,29 @@
+﻿@using CrossCutting.Identity
+@inject TokenProvider _tokenProvider;
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        </Found>
+        <NotFound>
+            <PageTitle>Not found</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Sorry, this address does not exists or you don`t have enough permissions to see this.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code
+{
+    [Parameter]
+    public TokenProvider? InitialState { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        _tokenProvider.XsrfToken = InitialState?.XsrfToken;
+        return base.OnInitializedAsync();
+    }
+}
+

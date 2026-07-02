@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DatabaseManagement.Contract\DatabaseManagement.Contract.csproj" />
+      <ProjectReference Include="..\Datastoring.EfCore\Datastoring.EfCore.csproj" />
+      <ProjectReference Include="..\TimeTrackingManagement.Contract\TimeTrackingManagement.Contract.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="DocumentFormat.OpenXml" Version="3.2.0" />
+    </ItemGroup>
+
+</Project>

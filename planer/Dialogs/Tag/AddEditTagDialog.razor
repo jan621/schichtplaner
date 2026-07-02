@@ -1,0 +1,113 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities
+@using CrossCutting.Entities.NotMapped.Smoobu
+@using MudBlazor.Utilities
+@using SmoobuManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ISmoobuManager SmoobuManager;
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <!--Name + Color-->
+                <MudItem xs="12" sm="7">
+                    <MudTextField Label="@Localizer["Name"]" Variant="Variant.Outlined" @bind-Value="_tag.Name"
+                                  Required="true" RequiredError="@Localizer["FieldIsRequired"]"/>
+                </MudItem>
+                <MudItem xs="12" sm="5">
+                    <MudColorPicker @bind-Value="_selectedColor" Label="@Localizer["Color"]" ColorPickerMode="ColorPickerMode.HEX"
+                                    DisableModeSwitch="true"/>
+                </MudItem>
+                <!---->
+
+                <!--Accommodation + IsNonAccommodation-->
+                @if (!_tag.IsNonAccommodation && _accommodations != null)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudSelect T="string" Label="@Localizer["Accommodations"]" MultiSelection="true"
+                                   @bind-SelectedValues="_selectedAccommodationIds">
+                            @foreach (var accommodation in _accommodations)
+                            {
+                                <MudSelectItem T="string" Value="@accommodation.Id.ToString()">
+                                    @accommodation.Name
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                }
+                <MudItem xs="12" sm="6">
+                    <MudCheckBox T="bool" Label="@Localizer["IsNonAccommodation"]" Color="Color.Primary"
+                                 @bind-Checked="_tag.IsNonAccommodation" Class="ml-n1">
+                    </MudCheckBox>
+                </MudItem>
+                <!---->
+            </MudGrid>
+
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="!_valid" Color="Color.Success"
+                   OnClick="@AddEditTag">
+            @(EditMode ? Localizer["EditTag"] : Localizer["AddTag"])
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public bool EditMode { get; set; }
+
+    [Parameter] public Tag? TagToEdit { get; set; }
+
+    private MudColor _selectedColor = "#ffffff";
+    private IEnumerable<string> _selectedAccommodationIds;
+    private IEnumerable<BasicAccommodation>? _accommodations;
+
+    private Tag _tag = new()
+    {
+        Id = string.Empty,
+        Name = string.Empty,
+        ColorHexCode = string.Empty,
+        AccommodationIds = new List<string>(),
+        IsNonAccommodation = false,
+        SortIndex = 0
+    };
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (!EditMode) return;
+
+        _tag = TagToEdit;
+        _selectedColor = TagToEdit.ColorHexCode;
+        _selectedAccommodationIds = TagToEdit.AccommodationIds;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var loadedBasicAccommodations = await SmoobuManager.GetBasicAccommodationsAsync();
+        _accommodations = loadedBasicAccommodations;
+        await base.OnInitializedAsync();
+    }
+
+    void AddEditTag()
+    {
+        if (!_tag.IsNonAccommodation)
+            _tag.AccommodationIds = _selectedAccommodationIds.ToList();
+        else
+            _tag.AccommodationIds = new List<string>();
+
+        _tag.ColorHexCode = _selectedColor.Value;
+        MudDialog.Close(DialogResult.Ok(_tag));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+
+    private bool _valid;
+}

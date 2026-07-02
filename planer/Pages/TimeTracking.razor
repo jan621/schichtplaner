@@ -1,0 +1,622 @@
+@page "/timeTracking"
+
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Language
+@using CrossCutting.Entities
+@using planer.Dialogs
+@using TimeTrackingManagement.Contract
+@using CrossCutting.Enums
+@using Microsoft.AspNetCore.Identity
+@using planer.Dialogs.TimeTracking
+@using UserManagement.Contract
+@using System.Globalization
+
+@inject IStringLocalizer<Language> Localizer;
+@inject NavigationManager NavigationManager;
+@inject IConfiguration Configuration;
+@inject ITimeTrackingManager TimeTrackingManager;
+@inject ISnackbar SnackBar;
+@inject IDialogService DialogService;
+@inject IUserManager UserManager;
+@inject UserManager<User> IdentityUserManager;
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@Localizer["TimeTracking"]</PageTitle>
+<AuthorizeView Context="authContext">
+    <MudStack Row="@(!_isMobile)"
+              Justify="Justify.SpaceBetween"
+              AlignItems="@(_isMobile ? AlignItems.Center : AlignItems.Start)"
+              Class="mb-4">
+        @if (!authContext.User.IsInRole(Role.Employee.ToString()))
+        {
+            <MudStack>
+                <MudText Class="@(_isMobile ? string.Empty : "mt-4")"
+                         Typo="Typo.h6">@Localizer["TimeTracking"]</MudText>
+            </MudStack>
+        }
+
+        <MudToggleGroup T="TimeTrackingView" Dense="true" Style="height: 60%; width: 9rem" Class="mt-3"
+                        SelectionMode="SelectionMode.SingleSelection" @bind-Value="@_timeTrackingView"
+                        @onclick="OnViewPeriodChangedAsync">
+            <MudToggleItem Value="@(TimeTrackingView.Weekly)" Text="@Localizer["Week"]"/>
+            <MudToggleItem Value="@(TimeTrackingView.Monthly)" Text="@Localizer["Month"]"/>
+        </MudToggleGroup>
+
+        <MudSpacer/>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Disabled="@(_tableLoading)"
+                           OnClick="@(() => SwitchViewTimeAsync(false, _timeTrackingView))"/>
+            @switch (_timeTrackingView)
+            {
+                case TimeTrackingView.Weekly:
+                    <MudText Typo="Typo.h6">
+                        @(Localizer["CW"] + ": " + _cultureInfo.Calendar.GetWeekOfYear(_viewDate,
+                                  _cultureInfo.DateTimeFormat.CalendarWeekRule,
+                                  _cultureInfo.DateTimeFormat.FirstDayOfWeek) + " " +
+                              _viewDate.Year)
+                    </MudText>
+                    break;
+                case TimeTrackingView.Monthly:
+                    <MudText Typo="Typo.h6">
+                        @(Localizer["Month"] + ": " +
+                              _viewDate.ToString("MMMM", _cultureInfo) + " " +
+                              _viewDate.Year)
+                    </MudText>
+
+                    break;
+            }
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Disabled="@(_tableLoading)"
+                           OnClick="@(() => SwitchViewTimeAsync(true, _timeTrackingView))"/>
+        </MudStack>
+    </MudStack>
+
+    <AuthorizeView Roles="Employee">
+        <Authorized Context="employeeAuthContext">
+            <MudTable @ref="_timeTrackingTable" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm"
+                      FixedHeader="true"
+                      Height="@Configuration["Settings:TableHeight"]" MultiSelection="@_canEditTimeEntry"
+                      GroupHeaderStyle="background-color:var(--mud-palette-background-grey)"
+                      @bind-SelectedItems="@_selectedTimeTrackingEntries"
+                      GroupFooterClass="mb-4" Elevation="3"
+                      ServerData="@(new Func<TableState, Task<TableData<TimeTrackingEntry>>>(ServerReload))">
+                <ToolBarContent>
+                    <MudTextField T="string" ValueChanged="@(s => OnSearch(s))"
+                                  Placeholder=@Localizer["SearchPlaceHolder"]
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium" Class="mt-0">
+                    </MudTextField>
+                    <MudSpacer/>
+
+                    @if (_canManualAddTimeEntry)
+                    {
+                        <MudButton Class="me-2" Color="Color.Success" Variant="Variant.Outlined"
+                                   OnClick="@OnAddTimeTrackingAsync" StartIcon="@Icons.Material.Filled.Add">
+                            @Localizer["Add"]
+                        </MudButton>
+                    }
+                    @if (_canEditTimeEntry && _selectedTimeTrackingEntries.Any())
+                    {
+                        @if (_selectedTimeTrackingEntries.Count == 1)
+                        {
+                            <MudButton StartIcon="@Icons.Material.Filled.Edit" Class="me-2"
+                                       Color="Color.Warning" Variant="Variant.Outlined"
+                                       OnClick="@OnEditTimeTrackingAsync">
+                                @Localizer["Modify"]
+                            </MudButton>
+                        }
+
+                        <MudButton Class="me-2" Color="Color.Error" Variant="Variant.Outlined"
+                                   OnClick="@OnDeleteTimeTrackingAsync" StartIcon="@Icons.Material.Filled.Delete">
+                            @Localizer["Delete"]
+                        </MudButton>
+                    }
+
+                    @if (_lastTimeTrackingEntry != null)
+                    {
+                        <MudText Class="pa-2 mx-2" Typo="Typo.body1">@_timerTimeSpan.ToString(@"hh\:mm\:ss")</MudText>
+                    }
+
+                    <MudIconButton Color="Color.Success" Icon="@Icons.Material.Filled.PlayCircle"
+                                   OnClick="@OnStartTimerAsync" Size="Size.Large"
+                                   Disabled="@(_lastTimeTrackingEntry != null)"/>
+                    @if (_lastTimeTrackingEntry != null)
+                    {
+                        <MudIconButton Color="Color.Error" Icon="@Icons.Material.Filled.StopCircle"
+                                       OnClick="@OnStopTimerAsync" Size="Size.Large"
+                                       Disabled="@(_lastTimeTrackingEntry == null)"/>
+                    }
+
+                </ToolBarContent>
+
+                <HeaderContent>
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="date_field"
+                                           T="TimeTrackingEntry">@Localizer["Date"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="start_field"
+                                           T="TimeTrackingEntry">@Localizer["Start"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="end_field"
+                                           T="TimeTrackingEntry">@Localizer["End"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="end_field"
+                                           T="TimeTrackingEntry">@Localizer["Sum"]</MudTableSortLabel>
+                    </MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="@Localizer["Date"]">@(context.Start.Date.ToString("dd.MM.yyyy"))</MudTd>
+                    <MudTd
+                        DataLabel="@Localizer["Start"]">@(context.Start.ToString("HH:mm") + " " + Localizer["Clock"])</MudTd>
+                    <MudTd DataLabel="@Localizer["End"]">
+                        @(context.End.HasValue ? context.End.Value.ToString("HH:mm") + " " + Localizer["Clock"] : "")
+                    </MudTd>
+                    <MudTd>@(context.SumHours + " " + Localizer["Hours"])</MudTd>
+                </RowTemplate>
+            </MudTable>
+
+        </Authorized>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="Company,Developer,Administrator,Management">
+        <Authorized Context="higherRightsAuthContext">
+            <MudStack Row="@(!_isMobile)" Column="@_isMobile">
+                <MudTextField T="string" ValueChanged="@(s => OnSearch(s))"
+                              Placeholder="@Localizer["SearchPlaceHolder"]"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium" Class="mt-0 w-100">
+                </MudTextField>
+
+                <MudSpacer />
+
+                <MudButton Class="me-2" Color="Color.Success" Variant="Variant.Outlined"
+                           OnClick="@OnAddTimeTrackingAsync" StartIcon="@Icons.Material.Filled.Add">
+                    @Localizer["Add"]
+                </MudButton>
+
+                @if (_selectedTimeTrackingEntries.Any())
+                {
+                    if (_selectedTimeTrackingEntries.Count == 1)
+                    {
+                        <MudButton StartIcon="@Icons.Material.Filled.Edit" Class="me-2"
+                                   Color="Color.Warning" Variant="Variant.Outlined"
+                                   OnClick="@OnEditTimeTrackingAsync">
+                            @Localizer["Modify"]
+                        </MudButton>
+                    }
+
+                    <MudButton Class="me-2" Color="Color.Error" Variant="Variant.Outlined"
+                               OnClick="@OnDeleteTimeTrackingAsync" StartIcon="@Icons.Material.Filled.Delete">
+                        @Localizer["Delete"]
+                    </MudButton>
+
+                    <MudButton Class="me-2" Color="Color.Info" Variant="Variant.Outlined"
+                               OnClick="@OnExportEntriesAsync" StartIcon="@Icons.Material.Filled.Upgrade">
+                        @Localizer["Export"]
+                    </MudButton>
+                }
+            </MudStack>
+
+
+            <MudTable @ref="_timeTrackingTable" Hover="true" Striped="true" Breakpoint="Breakpoint.Sm"
+                      FixedHeader="true"
+                      Height="@Configuration["Settings:TableHeight"]" MultiSelection="@_canEditTimeEntry"
+                      GroupHeaderStyle="background-color:var(--mud-palette-background-grey)"
+                      @bind-SelectedItems="@_selectedTimeTrackingEntries"
+                      GroupFooterClass="mb-4" Elevation="3"
+                      ServerData="@(new Func<TableState, Task<TableData<TimeTrackingEntry>>>(ServerReload))"
+                      GroupBy="@_managementGroupDefinition">
+
+                <HeaderContent>
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="date_field"
+                                           T="TimeTrackingEntry">@Localizer["Date"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="start_field"
+                                           T="TimeTrackingEntry">@Localizer["Start"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="end_field"
+                                           T="TimeTrackingEntry">@Localizer["End"]</MudTableSortLabel>
+                    </MudTh>
+
+                    <MudTh>
+                        <MudTableSortLabel SortLabel="end_field"
+                                           T="TimeTrackingEntry">@Localizer["Sum"]</MudTableSortLabel>
+                    </MudTh>
+                </HeaderContent>
+
+                <GroupHeaderTemplate>
+                    <MudTh colspan="5">@($"{context.Key}") </MudTh>
+                </GroupHeaderTemplate>
+
+                <RowTemplate>
+                    <MudTd DataLabel="@Localizer["Date"]">@(context.Start.Date.ToString("dd.MM.yyyy"))</MudTd>
+                    <MudTd
+                        DataLabel="@Localizer["Start"]">@(context.Start.ToString("HH:mm") + " " + Localizer["Clock"])</MudTd>
+                    <MudTd DataLabel="@Localizer["End"]">
+                        @(context.End.HasValue ? context.End.Value.ToString("HH:mm") + " " + Localizer["Clock"] : "")
+                    </MudTd>
+                    <MudTd>@(context.SumHours + " " + Localizer["Hours"])</MudTd>
+                </RowTemplate>
+            </MudTable>
+
+        </Authorized>
+    </AuthorizeView>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private MudTable<TimeTrackingEntry> _timeTrackingTable = new();
+    private HashSet<TimeTrackingEntry> _selectedTimeTrackingEntries = new();
+    private TimeTrackingEntry? _lastTimeTrackingEntry;
+    private string _searchString = string.Empty;
+    private Timer? _timer;
+    private TimeSpan _timerTimeSpan;
+    private DateTime _startTimer;
+    private User? _currentUser;
+    private bool _canEditTimeEntry, _canManualAddTimeEntry, _tableLoading;
+    private TimeTrackingView _timeTrackingView = TimeTrackingView.Weekly;
+    private static CultureInfo _cultureInfo = new("de-DE");
+    private DateTime _viewDate = DateTime.Today;
+
+    private TableGroupDefinition<TimeTrackingEntry> _managementGroupDefinition = new()
+    {
+        GroupName = "Employee",
+        Indentation = false,
+        Expandable = true,
+        IsInitiallyExpanded = false,
+        Selector = (t) => t.User.FullName
+    };
+
+    private bool _isMobile;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _isMobile = await JSRuntime.InvokeAsync<bool>("isSmallScreen");
+
+        if (firstRender)
+        {
+            var authenticationState = await AuthenticationStateTask!;
+            if (authenticationState.User.Identity != null && !authenticationState.User.Identity.IsAuthenticated)
+                NavigationManager.NavigateTo("/login");
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task<TableData<TimeTrackingEntry>> ServerReload(TableState state)
+    {
+        _tableLoading = true;
+        await HandlePermissionsAsync();
+        _selectedTimeTrackingEntries.Clear();
+
+        var userIsEmployee = await IdentityUserManager.IsInRoleAsync(_currentUser!, Role.Employee.ToString());
+        var dbTimeTrackingEntries = userIsEmployee
+            ? await TimeTrackingManager.GetAllByUserInRange(_currentUser!, _timeTrackingView, _viewDate)
+            : await TimeTrackingManager.GetAllByOrgInRange(_currentUser!, _timeTrackingView, _viewDate);
+        var timeTrackingEntries = dbTimeTrackingEntries.ToList();
+        HandleLastEntry(timeTrackingEntries);
+
+        if (userIsEmployee && _lastTimeTrackingEntry != null)
+            await HandleTimeExceedAsync();
+
+        //Filtering because running tracking entries shouldn't be shown in table
+        timeTrackingEntries = timeTrackingEntries.Where(t => t.End != null).ToList();
+
+        var totalCount = timeTrackingEntries.Count();
+
+        if (timeTrackingEntries == Enumerable.Empty<TimeTrackingEntry>())
+            SnackBar.Add(Localizer["ErrorLoadingData"], Severity.Error);
+
+        if (string.IsNullOrWhiteSpace(_searchString))
+        {
+            if (timeTrackingEntries.Any())
+            {
+                switch (state.SortLabel)
+                {
+                    case "date_field":
+                        timeTrackingEntries = timeTrackingEntries.OrderByDirection(state.SortDirection, u => u.Start.Date).ToList();
+                        break;
+                    case "start_field":
+                        var startDirection = state.SortDirection == SortDirection.Ascending ? SortDirection.Descending : SortDirection.Ascending;
+                        timeTrackingEntries = timeTrackingEntries.OrderByDirection(startDirection, u => u.Start.Date).ToList();
+                        break;
+                    case "end_field":
+                        timeTrackingEntries = timeTrackingEntries.OrderByDirection(state.SortDirection, u => u.End.Value.Date).ToList();
+                        break;
+                    case "sum_field":
+                        timeTrackingEntries = timeTrackingEntries.OrderByDirection(state.SortDirection, u => u.SumHours).ToList();
+                        break;
+                }
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(_searchString) || !timeTrackingEntries.Any())
+        {
+            _tableLoading = false;
+            StateHasChanged();
+            return new TableData<TimeTrackingEntry>() { TotalItems = totalCount, Items = timeTrackingEntries };
+        }
+
+        timeTrackingEntries = timeTrackingEntries.Where(x =>
+        {
+            if (x.Start.Date.ToString("dd.MM.yyyy").Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.Start.TimeOfDay.Hours.ToString().PadLeft(2, '0')
+                .Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.End.HasValue && x.End.Value.TimeOfDay.Hours.ToString()
+                    .PadLeft(2, '0').Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (x.SumHours.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+                return true;
+            _tableLoading = false;
+            StateHasChanged();
+            return false;
+        }).ToList();
+
+        _tableLoading = false;
+        StateHasChanged();
+        return new TableData<TimeTrackingEntry>() { TotalItems = totalCount, Items = timeTrackingEntries };
+    }
+
+    async Task HandlePermissionsAsync()
+    {
+        //If user is selected, admin or manager is the current editor
+        //Then enable editing
+        _currentUser = await UserManager.GetCurrentUserAsync();
+        _canEditTimeEntry = true;
+        _canManualAddTimeEntry = true;
+
+        var hasUserRole = await IdentityUserManager.IsInRoleAsync(_currentUser, Role.Employee.ToString());
+        if (hasUserRole)
+        {
+            _canEditTimeEntry = _currentUser.Organization.UserAllowedEditTimeTracking;
+            _canManualAddTimeEntry = _currentUser.Organization.UserAllowedManualTimeTracking;
+        }
+        else
+        {
+            _canEditTimeEntry = true;
+            _canManualAddTimeEntry = true;
+        }
+
+        StateHasChanged();
+    }
+
+    void HandleLastEntry(List<TimeTrackingEntry> timeTrackingEntries)
+    {
+        _lastTimeTrackingEntry = timeTrackingEntries.FirstOrDefault(t => t.End == null);
+    }
+
+    async Task HandleTimeExceedAsync()
+    {
+        _startTimer = _lastTimeTrackingEntry!.Start;
+        _timer = new Timer(UpdateTimer, null, 0, 1000);
+
+        if (_currentUser.Organization.TimeTrackingGapHours <=
+            DateTime.Now.TimeOfDay.Hours - _lastTimeTrackingEntry.Start.TimeOfDay.Hours)
+        {
+            while (true)
+            {
+                var parameters = new DialogParameters<ForgotStampOutDialog>();
+                parameters.Add(x => x.TimeTrackingEntry, _lastTimeTrackingEntry);
+                var dialog = await DialogService.ShowAsync<ForgotStampOutDialog>(@Localizer["TimeTracking"], parameters);
+                var dialogResult = await dialog.Result;
+
+                if (dialogResult.Canceled)
+                    continue;
+
+                var timeTrackingEntryToUpdate = dialogResult.Data as TimeTrackingEntry;
+                var updated = await TimeTrackingManager.UpdateAsync(timeTrackingEntryToUpdate!, true);
+
+                if (!updated)
+                    SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+                else
+                    SnackBar.Add(Localizer["SuccessfullyModifiedTimeTrackingEntry"], Severity.Success);
+
+                break;
+            }
+
+            await _timeTrackingTable.ReloadServerData();
+        }
+    }
+
+    private async void OnSearch(string text)
+    {
+        _searchString = text;
+        await _timeTrackingTable.ReloadServerData();
+    }
+
+    async Task OnStartTimerAsync()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToStartTimeTracking"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["TimeTracking"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (!dialogResult.Canceled)
+        {
+            _startTimer = DateTime.Now;
+            _timer = new Timer(UpdateTimer, null, 0, 1000);
+
+            var created = await TimeTrackingManager.CreateAsync(new TimeTrackingEntry
+            {
+                Id = null,
+                Start = _startTimer,
+                End = null,
+                User = _currentUser,
+            });
+
+            if (!created)
+                SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            else
+                SnackBar.Add(Localizer["SuccessfullyStartedTimeTracking"], Severity.Success);
+
+            await _timeTrackingTable.ReloadServerData();
+        }
+    }
+
+    async Task OnStopTimerAsync()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToStopTimeTracking"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["TimeTracking"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (!dialogResult.Canceled && _timer != null)
+        {
+            await _timer.DisposeAsync();
+            _lastTimeTrackingEntry!.End = _startTimer + _timerTimeSpan;
+            var updated = await TimeTrackingManager.UpdateAsync(_lastTimeTrackingEntry);
+
+            if (!updated)
+                SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            else
+                SnackBar.Add(Localizer["SuccessfullyStoppedTimeTracking"], Severity.Success);
+
+            _timerTimeSpan = TimeSpan.Zero;
+            await _timeTrackingTable.ReloadServerData();
+        }
+    }
+
+    void UpdateTimer(object? state)
+    {
+        _timerTimeSpan = DateTime.Now - _startTimer;
+        InvokeAsync(StateHasChanged);
+    }
+
+    async Task OnAddTimeTrackingAsync()
+    {
+        var userIsEmployee = await IdentityUserManager.IsInRoleAsync(_currentUser!, Role.Employee.ToString());
+
+        var timeTrackingEntry = new TimeTrackingEntry
+        {
+            Id = null,
+            Start = default,
+            User = _currentUser!
+        };
+
+        var parameters = new DialogParameters<AddEditTimeTrackingDialog>();
+        parameters.Add(x => x.EditMode, false);
+        parameters.Add(x => x.IsManagement, !userIsEmployee);
+        parameters.Add(x => x.TimeTrackingEntry, timeTrackingEntry);
+        var dialog = await DialogService.ShowAsync<AddEditTimeTrackingDialog>(Localizer["TimeTracking"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled)
+            return;
+
+        var timeTrackingEntryToAdd = dialogResult.Data as TimeTrackingEntry;
+        var added = await TimeTrackingManager.CreateAsync(timeTrackingEntryToAdd!);
+
+        if (!added)
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        else
+            SnackBar.Add(Localizer["SuccessfullyAddedTimeTrackingEntry"], Severity.Success);
+
+        await _timeTrackingTable.ReloadServerData();
+    }
+
+    async Task OnEditTimeTrackingAsync()
+    {
+        var parameters = new DialogParameters<AddEditTimeTrackingDialog>();
+        parameters.Add(x => x.EditMode, true);
+        parameters.Add(x => x.TimeTrackingEntry, _selectedTimeTrackingEntries.First());
+        var dialog = await DialogService.ShowAsync<AddEditTimeTrackingDialog>(@Localizer["TimeTracking"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult.Canceled)
+            return;
+
+        var timeTrackingEntryToUpdate = dialogResult.Data as TimeTrackingEntry;
+        var updated = await TimeTrackingManager.UpdateAsync(timeTrackingEntryToUpdate!, true);
+
+        if (!updated)
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        else
+            SnackBar.Add(Localizer["SuccessfullyModifiedTimeTrackingEntry"], Severity.Success);
+
+        await _timeTrackingTable.ReloadServerData();
+    }
+
+    async Task OnDeleteTimeTrackingAsync()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToDeleteEntries"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["TimeTracking"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (!dialogResult.Canceled)
+        {
+            foreach (var timeTrackingEntry in _selectedTimeTrackingEntries)
+            {
+                var deleted = await TimeTrackingManager.DeleteAsync(timeTrackingEntry, true);
+                if (!deleted)
+                    SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            }
+
+            await _timeTrackingTable.ReloadServerData();
+        }
+    }
+
+    async Task OnExportEntriesAsync()
+    {
+        var dateRangeString = string.Empty;
+
+        switch (_timeTrackingView)
+        {
+            case TimeTrackingView.Weekly:
+                dateRangeString = Localizer["CW"] + ": " + _cultureInfo.Calendar.GetWeekOfYear(_viewDate,
+                                      _cultureInfo.DateTimeFormat.CalendarWeekRule,
+                                      _cultureInfo.DateTimeFormat.FirstDayOfWeek) + " " +
+                                  _viewDate.Year;
+                break;
+            case TimeTrackingView.Monthly:
+                dateRangeString =
+                    Localizer["Month"] + ": " +
+                    _viewDate.ToString("MMMM", _cultureInfo) + " " +
+                    _viewDate.Year;
+                break;
+        }
+
+        var documentBytes = await TimeTrackingManager.ExportTimeTrackingEntriesAsExcelAsync(_selectedTimeTrackingEntries.ToList(), dateRangeString);
+
+        if (documentBytes != null && documentBytes.Length > 0)
+        {
+            var base64String = Convert.ToBase64String(documentBytes);
+            await JSRuntime.InvokeVoidAsync("downloadFile", base64String, "Zeiterfassung.xlsx", "application/octet-stream");
+        }
+    }
+
+    async Task SwitchViewTimeAsync(bool forward, TimeTrackingView timeTrackingView)
+    {
+        switch (timeTrackingView)
+        {
+            case TimeTrackingView.Weekly:
+                _viewDate = forward ? _viewDate.Date.AddDays(7) : _viewDate.Date.AddDays(-7);
+                break;
+            case TimeTrackingView.Monthly:
+                _viewDate = forward ? _viewDate.Date.AddMonths(1) : _viewDate.Date.AddMonths(-1);
+                break;
+        }
+
+        await _timeTrackingTable.ReloadServerData();
+    }
+
+    async Task OnViewPeriodChangedAsync()
+    {
+        await _timeTrackingTable.ReloadServerData();
+    }
+
+}

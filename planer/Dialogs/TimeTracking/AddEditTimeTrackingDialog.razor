@@ -1,0 +1,110 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities
+@using EmployeeManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject IEmployeeManager EmployeeManager;
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <!--Employee-->
+                @if (IsManagement && _employees.Any())
+                {
+                    <MudItem xs="12">
+                        <MudSelect T="User" Label="@Localizer["Employees"]"
+                                   @bind-Value="@TimeTrackingEntry.User"
+                                   ToStringFunc="@(u => u.FullName)">
+                            @foreach (var employee in _employees)
+                            {
+                                <MudSelectItem T="User" Value="@employee">
+                                    @employee.FullName
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>   
+                }
+                <!---->
+
+                <!--Date-->
+                <MudItem xs="12">
+                    <MudDatePicker Label="@Localizer["Date"]" Variant="Variant.Outlined" @bind-Date="@_date"
+                                   Required="true" RequiredError="@Localizer["FieldIsRequired"]" DisableToolbar="true"/>
+                </MudItem>
+                <!---->
+
+                <!--Start-->
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="@Localizer["Start"]" Variant="Variant.Outlined" @bind-Time="@_start"
+                                   Required="true" RequiredError="@Localizer["FieldIsRequired"]" DisableToolbar="true"/>
+                </MudItem>
+                <!---->
+
+                <!--End-->
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker Label="@Localizer["End"]" Variant="Variant.Outlined" @bind-Time="@_end"
+                                   Required="true" RequiredError="@Localizer["FieldIsRequired"]" DisableToolbar="true"/>
+                </MudItem>
+                <!---->
+            </MudGrid>
+
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="!_valid" Color="Color.Success"
+                   OnClick="@AddEditTimeTracking">
+            @(EditMode ? Localizer["Modify"] : Localizer["Add"])
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public bool EditMode { get; set; }
+
+    [Parameter] public bool IsManagement { get; set; } //If true, enable the employee selection
+    
+    [Parameter] public required TimeTrackingEntry TimeTrackingEntry { get; set; }
+
+    private bool _valid;
+    private DateTime? _date = DateTime.Now;
+    private TimeSpan? _start = TimeSpan.Zero, _end = TimeSpan.FromHours(1);
+    private IEnumerable<User> _employees = new List<User>();
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (IsManagement)
+            {
+                _employees = await EmployeeManager.GetAllAsync();
+                TimeTrackingEntry.User = _employees.FirstOrDefault();
+            }
+
+            if (EditMode)
+            {
+                _date = TimeTrackingEntry.Start.Date;
+                _start = TimeTrackingEntry.Start!.TimeOfDay;
+                _end = TimeTrackingEntry.End!.Value.TimeOfDay;   
+            }
+            
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void AddEditTimeTracking()
+    {
+        TimeTrackingEntry.Start = _date!.Value.Date + _start!.Value;
+        TimeTrackingEntry.End = _date!.Value.Date + _end!.Value;
+
+        MudDialog.Close(DialogResult.Ok(TimeTrackingEntry));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

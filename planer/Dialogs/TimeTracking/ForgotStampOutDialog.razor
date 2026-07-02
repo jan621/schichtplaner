@@ -1,0 +1,68 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities
+@using TimeTrackingManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+
+<MudDialog Style="width: 20%">
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <!--Info text-->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body2">
+                        @(Localizer["NotStampOutSince"] + " "
+                        + TimeTrackingGapHours + " " + Localizer["Hours"]
+                        + " " + Localizer["NotStampOutSinceInsertData"])
+                    </MudText>
+                </MudItem>
+                <!---->
+
+                <!--End-->
+                <MudItem xs="12">
+                    <MudTimePicker Label="@Localizer["End"]" Variant="Variant.Outlined" @bind-Time="@_end"
+                                   Required="true" RequiredError="@Localizer["FieldIsRequired"]" DisableToolbar="true"/>
+                </MudItem>
+                <!---->
+            </MudGrid>
+
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" Disabled="!_valid" Color="Color.Success"
+                   OnClick="@AddTimeTrackingEnd">
+            @Localizer["Save"]
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public required TimeTrackingEntry TimeTrackingEntry { get; set; }
+    
+    [Parameter] public required byte TimeTrackingGapHours { get; set; }
+
+    private bool _valid;
+    private TimeSpan? _end;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _end = TimeTrackingEntry.Start.TimeOfDay + TimeSpan.FromHours(1);
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void AddTimeTrackingEnd()
+    {
+        TimeTrackingEntry.End = TimeTrackingEntry.Start.Date + _end!.Value;
+        MudDialog.Close(DialogResult.Ok(TimeTrackingEntry));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

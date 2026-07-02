@@ -1,0 +1,141 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Entities.NotMapped
+@using CrossCutting.Identity
+@using System.ComponentModel.DataAnnotations
+@using System.Net
+@using CrossCutting.Entities
+@using CrossCutting.Enums
+@using EmployeeManagement.Contract
+@using TeamManagement.Contract
+@using UserManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ITeamManager TeamManager;
+@inject IEmployeeManager EmployeeManager;
+@inject IUserManager UserManager;
+@inject ISnackbar Snackbar;
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_valid" Class="mb-2">
+            <MudGrid>
+                <MudItem xs="12">
+                    <div class="d-flex justify-center">
+                        <MudText>@Localizer["InsertEmployeeData"]</MudText>
+                    </div>
+                </MudItem>
+
+                <!--Firstname - Lastname-->
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" Label="@Localizer["FirstName"]" Variant="Variant.Outlined" @bind-Value="_signUpEmployeeRequest.FirstName" Required="true"
+                                  RequiredError="@Localizer["FieldIsRequired"]"/>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" Label="@Localizer["LastName"]" Variant="Variant.Outlined" @bind-Value="_signUpEmployeeRequest.LastName" Required="true"
+                                  RequiredError="@Localizer["FieldIsRequired"]"/>
+                </MudItem>
+                <!---->
+
+                <!--Email - Roles-->
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string" Label="@Localizer["Email"]" Variant="Variant.Outlined" @bind-Value="_signUpEmployeeRequest.Email" Required="true"
+                                  RequiredError="@Localizer["FieldIsRequired"]"
+                                  Validation="@(new EmailAddressAttribute() { ErrorMessage = @Localizer["EmailIsInvalid"] })"/>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect Label="@Localizer["Roles"]" @bind-Value="SelectedRole">
+                        <MudSelectItem Value="Role.Employee">@Localizer[Role.Employee.ToString()]</MudSelectItem>
+                        <MudSelectItem Value="Role.Management">@Localizer[Role.Management.ToString()]</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <!---->
+
+                <!--Teams-->
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="Team" Label="@Localizer["Teams"]" MultiSelection="true" @bind-Value="_team" @bind-SelectedValues="@SelectedTeams"
+                               Required="true" Clearable="true" RequiredError="@Localizer["FieldIsRequired"]">
+                        @foreach (var team in _teams)
+                        {
+                            <MudSelectItem T="Team" Value="@team">@team.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <!---->
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color.Error" Variant="Variant.Outlined" OnClick="@Cancel" Class="mt-2">@Localizer["Cancel"]</MudButton>
+        <MudButton Variant="Variant.Outlined" Disabled="@(!_valid || Loading)" Color="Color.Success" OnClick="@AddEmployee" Class="mt-2">
+            @if (Loading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+            }
+            else
+            {
+                <MudText>@Localizer["InviteEmployee"]</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required MudDialogInstance MudDialog { get; set; }
+
+    private bool _valid;
+    public bool Loading;
+    public Role SelectedRole { get; set; } = Role.Employee;
+
+    private Team _team = new()
+    {
+        Name = string.Empty,
+        Members = new List<User>()
+    };
+
+    public IEnumerable<Team> SelectedTeams { get; set; } = new HashSet<Team>();
+    private IEnumerable<Team> _teams = new List<Team>();
+
+    private SignUpEmployeeRequest _signUpEmployeeRequest = new()
+    {
+        FirstName = string.Empty,
+        LastName = string.Empty,
+        Email = string.Empty,
+        Teams = new List<Team>(),
+        Organization = null!,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _teams = await TeamManager.GetAllAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private async Task AddEmployee()
+    {
+        Loading = true;
+        var currentUser = await UserManager.GetCurrentUserAsync();
+        
+        _signUpEmployeeRequest.Teams = SelectedTeams.ToList();
+        _signUpEmployeeRequest.Role = SelectedRole;
+        _signUpEmployeeRequest.Organization = currentUser.Organization;
+
+        try
+        {
+            await EmployeeManager.InviteEmployeeAsync(_signUpEmployeeRequest);
+        }
+        catch (Exception ex)
+        {
+            if(ex.ToString() == HttpStatusCode.Conflict.ToString())
+                Snackbar.Add(Localizer["EmailAlreadyExists"], Severity.Warning);
+        }
+
+        Loading = false;
+        MudDialog.Close(true);
+    }
+
+    void Cancel() => MudDialog.Close(false);
+}

@@ -1,0 +1,13 @@
+{
+  "Test": "asd",
+  "ConfirmRegistration":  {
+    "Subject": "[HostFlow-Planer] Passwort zurücksetzen",
+    "Body": "Hallo {0}, bestätige hier deinen Account http://localhost:5059/confirmMail/{1}"
+  },
+  "ResetPassword": {
+    "Subject": "[HostFlow-Planer] Passwort zurücksetzen",
+    "Body": "Hallo {0}, setze hier dein Passwort zurück http://localhost:5059/passwordReset-{1}-{2}"
+  },
+  "HostInvitation":  "HostInvitationTest",
+  "AccountActivatedByHost": "AccountActivatedByHostTest"
+}

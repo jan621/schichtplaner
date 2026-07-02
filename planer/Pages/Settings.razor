@@ -1,0 +1,311 @@
+@page "/settings"
+@using Microsoft.Extensions.Localization
+@using CrossCutting.Language
+@using planer.Dialogs
+@using SmoobuManagement.Contract
+@using UserManagement.Contract
+@using CrossCutting.Entities
+@using OrganizationManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ISmoobuManager SmoobuManager;
+@inject ISnackbar SnackBar;
+@inject IDialogService DialogService;
+@inject IUserManager UserManager;
+@inject IOrganizationManager OrganizationManager;
+@inject IJSRuntime JsRuntime;
+
+<PageTitle>@Localizer["Settings"]</PageTitle>
+
+<AuthorizeView Roles="Company,Developer,Administrator,Management">
+    <Authorized>
+        <MudContainer Class="mt-6" MaxWidth="MaxWidth.Large">
+            @if (_loadingPage)
+            {
+                <MudStack Spacing="15">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="15vh"/>
+                </MudStack>
+            }
+            else
+            {
+                <MudStack Spacing="10">
+                    <!--Shift planner-->
+                    <MudCard Elevation="2">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Align="Align.Center">@Localizer["ShiftPlan"]</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudDivider Class="py-2"/>
+                        <MudCardContent>
+                            <MudGrid Style="align-items: baseline" Spacing="3">
+                                <!--Smoobu API Key-->
+                                <MudItem xs="12" sm="10">
+                                    <MudTextField @bind-Value="@_smoobuApiKey" Label="@Localizer["InsertSmoobuApiKey"]" Variant="Variant.Outlined"/>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="2">
+                                    <MudButton OnClick="@SaveSmoobuApiKey" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
+                                               StartIcon="@Icons.Material.Filled.Save" Disabled="@string.IsNullOrEmpty(_smoobuApiKey)">
+                                        @if (_smoobuLoading)
+                                        {
+                                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Success"/>
+                                            <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                                        }
+                                        else
+                                        {
+                                            @Localizer["Save"]
+                                        }
+                                    </MudButton>
+                                </MudItem>
+                                <!---->
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                    <!---->
+
+                    <!--Organization-->
+                    <MudCard Elevation="2">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Align="Align.Center">@Localizer["Organization"]</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudDivider Class="py-2"/>
+                        <MudCardContent>
+                            <MudGrid Style="align-items: baseline" Spacing="3">
+                                <!--Time tracking gap hours-->
+                                <MudItem xs="12" sm="10">
+                                    <MudNumericField @bind-Value="@_timeTrackingGapHours" Label="@Localizer["InsertTrackingGapHours"]"
+                                                     Variant="Variant.Outlined" Min="1" Max="24"/>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="2">
+                                    <MudButton OnClick="@OnSaveTimeTrackingAsync" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
+                                               StartIcon="@Icons.Material.Filled.Save">
+                                        @if (_timeTrackingGapHoursLoading)
+                                        {
+                                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Success"/>
+                                            <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                                        }
+                                        else
+                                        {
+                                            @Localizer["Save"]
+                                        }
+                                    </MudButton>
+                                </MudItem>
+                                <!---->
+
+                                <!--Employee allowed edit time tracking-->
+                                <MudItem xs="12" sm="10">
+                                    <MudCheckBox @bind-Value="@_employeeAllowedEditTimeTracking" Label="@Localizer["EmployeeAllowedEditTimeEntry"]"/>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="2">
+                                    <MudButton OnClick="@OnSaveEmployeeEditTimeEntryAsync" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
+                                               StartIcon="@Icons.Material.Filled.Save">
+                                        @if (_employeeAllowedEditTimeEntryLoading)
+                                        {
+                                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Success"/>
+                                            <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                                        }
+                                        else
+                                        {
+                                            @Localizer["Save"]
+                                        }
+                                    </MudButton>
+                                </MudItem>
+                                <!---->
+
+                                <!--Employee allowed manual tracking-->
+                                <MudItem xs="12" sm="10">
+                                    <MudCheckBox @bind-Value="@_employeeAllowedManualTimeTracking" Label="@Localizer["EmployeeAllowedManualTimeEntry"]"/>
+                                </MudItem>
+
+                                <MudItem xs="12" sm="2">
+                                    <MudButton OnClick="@OnSaveEmployeeManualTimeEntryAsync" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Large"
+                                               StartIcon="@Icons.Material.Filled.Save">
+                                        @if (_employeeAllowedManualTimeEntryLoading)
+                                        {
+                                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" Color="Color.Success"/>
+                                            <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                                        }
+                                        else
+                                        {
+                                            @Localizer["Save"]
+                                        }
+                                    </MudButton>
+                                </MudItem>
+                                <!---->
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                    <!---->
+                </MudStack>
+            }
+        </MudContainer>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private string _smoobuApiKey = string.Empty;
+    private int _timeTrackingGapHours;
+
+    private bool _smoobuLoading,
+        _timeTrackingGapHoursLoading,
+        _employeeAllowedEditTimeEntryLoading,
+        _employeeAllowedManualTimeEntryLoading,
+        _loadingPage = true,
+        _employeeAllowedEditTimeTracking,
+        _employeeAllowedManualTimeTracking;
+
+    private User? _currentUser;
+    private bool _isMobile;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _isMobile = await JsRuntime.InvokeAsync<bool>("isSmallScreen");
+        if (firstRender)
+        {
+            _currentUser = await UserManager.GetCurrentUserAsync();
+            await LoadApiKeys();
+            LoadOrganizationSettings();
+            _loadingPage = false;
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async Task LoadApiKeys()
+    {
+        _smoobuApiKey = await SmoobuManager.GetUserApiKeyAsync();
+    }
+
+    void LoadOrganizationSettings()
+    {
+        _timeTrackingGapHours = _currentUser!.Organization.TimeTrackingGapHours;
+        _employeeAllowedEditTimeTracking = _currentUser!.Organization.UserAllowedEditTimeTracking;
+        _employeeAllowedManualTimeTracking = _currentUser!.Organization.UserAllowedManualTimeTracking;
+    }
+
+    async Task<bool> SaveSettingConfirmationDialog()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToChangeSettings"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["Settings"], parameters);
+        var dialogResult = await dialog.Result;
+        return !dialogResult.Canceled;
+    }
+
+    async Task SaveSmoobuApiKey()
+    {
+        _smoobuLoading = true;
+
+        var dialogResult = await SaveSettingConfirmationDialog();
+
+        if (!dialogResult)
+        {
+            _smoobuLoading = false;
+            return;
+        }
+
+        var isKeyValid = await SmoobuManager.IsApiKeyValidAsync(_smoobuApiKey);
+        if (!isKeyValid)
+        {
+            SnackBar.Add(Localizer["ApiKeyInvalid"], Severity.Warning);
+            _smoobuLoading = false;
+            return;
+        }
+
+        var apiKeySaved = await SmoobuManager.SaveApiKeyAsync(_smoobuApiKey);
+        if (apiKeySaved)
+            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
+        else
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        await LoadApiKeys();
+        _smoobuLoading = false;
+    }
+
+    async Task OnSaveTimeTrackingAsync()
+    {
+        _timeTrackingGapHoursLoading = true;
+
+        var dialogResult = await SaveSettingConfirmationDialog();
+
+        if (!dialogResult)
+        {
+            _timeTrackingGapHoursLoading = false;
+            return;
+        }
+
+        var organization = _currentUser?.Organization;
+        organization!.TimeTrackingGapHours = (byte)_timeTrackingGapHours;
+
+        var timeTrackingSaved = await OrganizationManager.UpdateAsync(organization, true);
+
+        if (timeTrackingSaved)
+            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
+        else
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        LoadOrganizationSettings();
+        _timeTrackingGapHoursLoading = false;
+    }
+
+    async Task OnSaveEmployeeEditTimeEntryAsync()
+    {
+        _employeeAllowedEditTimeEntryLoading = true;
+
+        var dialogResult = await SaveSettingConfirmationDialog();
+
+        if (!dialogResult)
+        {
+            _employeeAllowedEditTimeEntryLoading = false;
+            return;
+        }
+
+        var organization = _currentUser?.Organization;
+        organization!.UserAllowedEditTimeTracking = _employeeAllowedEditTimeTracking;
+
+        var timeTrackingSaved = await OrganizationManager.UpdateAsync(organization, true);
+
+        if (timeTrackingSaved)
+            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
+        else
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        LoadOrganizationSettings();
+        _employeeAllowedEditTimeEntryLoading = false;
+    }
+
+    async Task OnSaveEmployeeManualTimeEntryAsync()
+    {
+        _employeeAllowedManualTimeEntryLoading = true;
+
+        var dialogResult = await SaveSettingConfirmationDialog();
+
+        if (!dialogResult)
+        {
+            _employeeAllowedManualTimeEntryLoading = false;
+            return;
+        }
+
+        var organization = _currentUser?.Organization;
+        organization!.UserAllowedManualTimeTracking = _employeeAllowedManualTimeTracking;
+
+        var timeTrackingSaved = await OrganizationManager.UpdateAsync(organization, true);
+
+        if (timeTrackingSaved)
+            SnackBar.Add(Localizer["SettingsSavedSuccessfully"], Severity.Success);
+        else
+            SnackBar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+        LoadOrganizationSettings();
+        _employeeAllowedManualTimeEntryLoading = false;
+    }
+
+}

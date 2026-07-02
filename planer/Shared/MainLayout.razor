@@ -1,0 +1,115 @@
+﻿@using CrossCutting.Identity
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+@using planer.Dialogs
+@using UserManagement.Contract
+
+@inherits LayoutComponentBase
+
+@inject IStringLocalizer<Language> Localizer;
+@inject NavigationManager NavigationManager;
+@inject IDialogService DialogService;
+@inject IUserManager UserManager;
+
+<MudThemeProvider Theme="CrossCutting.MudThemes.Frontend.FrontendThemeDesktop"/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <AuthorizeView>
+            <Authorized>
+                <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                               Edge="Edge.Start"
+                               OnClick="@((e) => DrawerToggle())" />
+            </Authorized>
+        </AuthorizeView>
+        <MudSpacer />
+        <MudText Typo="Typo.h5"
+                 Align="Align.Center"
+                 Color="Color.Dark">
+            @Localizer["ApplicationName"]
+        </MudText>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <MudMenu AnchorOrigin="Origin.BottomRight"
+                         TransformOrigin="Origin.TopRight">
+                    <ActivatorContent>
+                        <MudChip T="string"
+                                 Size="Size.Large"
+                                 Color="Color.Inherit">
+                            <MudStack Spacing="0"
+                                      Row="true"
+                                      Class="flex flex-row">
+                                <MudAvatar>
+                                    <MudImage Src="https://i.pravatar.cc/300"></MudImage>
+                                </MudAvatar>
+                                <MudText Typo="Typo.body2"
+                                         Class="my-auto">
+                                    @_userSession?.FullName
+                                </MudText>
+                            </MudStack>
+                        </MudChip>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem OnClick="OnSettingsCLickedAsync">@Localizer["Settings"]</MudMenuItem>
+                        <MudMenuItem OnClick="LogoutAsync">@Localizer["Logout"]</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </Authorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <AuthorizeView>
+        <Authorized>
+            <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+                <NavMenu/>
+                <MudDivider/>
+            </MudDrawer>
+        </Authorized>
+    </AuthorizeView>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-4 pt-4 pb-10">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    private UserSession? _userSession;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _userSession = await UserManager.GetUserSessionAsync();
+            StateHasChanged();
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+    
+    private async Task LogoutAsync()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToLogout"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["Logout"], parameters);
+        var dialogResult = await dialog.Result;
+        
+        if(!dialogResult.Canceled)
+            NavigationManager.NavigateTo("/logout", true);
+    }
+
+    private void OnSettingsCLickedAsync()
+    {
+        NavigationManager.NavigateTo("/settings");
+    }
+
+}

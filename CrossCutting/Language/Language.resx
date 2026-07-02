@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="ApplicationName" xml:space="preserve">
+        <value>Schichtplaner</value>
+    </data>
+    <data name="SignIn" xml:space="preserve">
+        <value>Anmelden</value>
+    </data>
+    <data name="InsertLoginData" xml:space="preserve">
+        <value>Bitte geben Sie Ihre Anmeldedaten ein.</value>
+    </data>
+    <data name="RememberMe" xml:space="preserve">
+        <value>Erinnere mich</value>
+    </data>
+    <data name="FieldIsRequired" xml:space="preserve">
+        <value>Dieses Feld wird benötigt.</value>
+    </data>
+    <data name="EmailIsInvalid" xml:space="preserve">
+        <value>Diese E-Mail Adresse ist ungültig.</value>
+    </data>
+    <data name="Password" xml:space="preserve">
+        <value>Passwort</value>
+    </data>
+    <data name="Email" xml:space="preserve">
+        <value>E-Mail</value>
+    </data>
+    <data name="LoginFailed" xml:space="preserve">
+        <value>Es trat ein Problem beim Anmelden auf.</value>
+    </data>
+    <data name="WrongLoginData" xml:space="preserve">
+        <value>Die E-Mail Adresse oder das Passwort ist falsch.</value>
+    </data>
+    <data name="Processing" xml:space="preserve">
+        <value>Bearbeite...</value>
+    </data>
+    <data name="NotActivated" xml:space="preserve">
+        <value>Konto wurde noch nicht freigeschaltet.</value>
+    </data>
+    <data name="ForgotPassword" xml:space="preserve">
+        <value>Passwort vergessen?</value>
+    </data>
+    <data name="No" xml:space="preserve">
+        <value>Nein</value>
+    </data>
+    <data name="Yes" xml:space="preserve">
+        <value>Ja</value>
+    </data>
+    <data name="DoYouWantToResetPassword" xml:space="preserve">
+        <value>Wollen Sie das Passwort für diesen Account zurücksetzen?</value>
+    </data>
+    <data name="ResetPassword" xml:space="preserve">
+        <value>Passwort zurücksetzen</value>
+    </data>
+    <data name="ErrorOccurred" xml:space="preserve">
+        <value>Es ist ein Fehler aufgetreten.</value>
+    </data>
+    <data name="PasswordResetSuccess" xml:space="preserve">
+        <value>Falls diese E-Mail existiert, haben Sie eine neue Mail erhalten.</value>
+    </data>
+    <data name="SignUp" xml:space="preserve">
+        <value>Registrieren</value>
+    </data>
+    <data name="InsertData" xml:space="preserve">
+        <value>Bitte geben Sie Ihre Daten ein.</value>
+    </data>
+    <data name="FirstName" xml:space="preserve">
+        <value>Vorname</value>
+    </data>
+    <data name="LastName" xml:space="preserve">
+        <value>Nachname</value>
+    </data>
+    <data name="CompanyName" xml:space="preserve">
+        <value>Firmenname</value>
+    </data>
+    <data name="RePeatPassword" xml:space="preserve">
+        <value>Passwort wiederholen</value>
+    </data>
+    <data name="PasswordDontMatch" xml:space="preserve">
+        <value>Passwörter stimmen nicht überein</value>
+    </data>
+    <data name="SuccessfullySignedUp" xml:space="preserve">
+        <value>Registrierung war erfolgreich.</value>
+    </data>
+    <data name="EmailConfirmedSuccessfully" xml:space="preserve">
+        <value>Ihre E-Mail Adresse wurde erfolgreich bestätigt.</value>
+    </data>
+    <data name="EmailAlreadyConfirmed" xml:space="preserve">
+        <value>Ihre E-Mail Adresse wurde bereits bestätigt.</value>
+    </data>
+    <data name="Cancel" xml:space="preserve">
+        <value>Abbrechen</value>
+    </data>
+    <data name="TypeInYourNewPassword" xml:space="preserve">
+        <value>Geben Sie Ihr neues Passwort ein.</value>
+    </data>
+    <data name="PasswordResetSuccessfully" xml:space="preserve">
+        <value>Das Passwort wurde erfolgreich zurückgesetzt.</value>
+    </data>
+    <data name="Token" xml:space="preserve">
+        <value>Token</value>
+    </data>
+    <data name="Administrator" xml:space="preserve">
+        <value>Administrator</value>
+    </data>
+    <data name="Hosts" xml:space="preserve">
+        <value>Hosts</value>
+    </data>
+    <data name="Account" xml:space="preserve">
+        <value>Konto</value>
+    </data>
+    <data name="Settings" xml:space="preserve">
+        <value>Einstellungen</value>
+    </data>
+    <data name="ReleaseUsers" xml:space="preserve">
+        <value>User freigeben</value>
+    </data>
+    <data name="Host" xml:space="preserve">
+        <value>Host</value>
+    </data>
+    <data name="ReleaseUser" xml:space="preserve">
+        <value>User freigeben</value>
+    </data>
+    <data name="DoYouWantToReleaseUsers" xml:space="preserve">
+        <value>Wollen Sie diese Benutzer freigeben?</value>
+    </data>
+    <data name="NoAccount" xml:space="preserve">
+        <value>Noch keinen Account?</value>
+    </data>
+    <data name="AlreadyHaveAccount" xml:space="preserve">
+        <value>Sie haben bereits ein Konto?</value>
+    </data>
+    <data name="PasswordMinLength" xml:space="preserve">
+        <value>Das Passwort muss mindestens aus 8 Buchstaben bestehen</value>
+    </data>
+    <data name="PasswordMinOneCapitalLetter" xml:space="preserve">
+        <value>Das Passwort muss mindestens einen Großbuchstaben enthalten</value>
+    </data>
+    <data name="PasswordMinOneLowerCaseLetter" xml:space="preserve">
+        <value>Das Passwort muss mindestens einen Kleinbuchstaben enthalten</value>
+    </data>
+    <data name="PasswordNeedOneDigit" xml:space="preserve">
+        <value>Das Passwort muss mindestens eine Ziffer enthalten</value>
+    </data>
+    <data name="PasswordMinOneAlphanumericCharacter" xml:space="preserve">
+        <value>Das Passwort muss mindestens einen Alphanumerisches Zeichen beinhalten</value>
+    </data>
+    <data name="CalendarOverview" xml:space="preserve">
+        <value>Kalender / Übersicht</value>
+    </data>
+    <data name="WorkAreas" xml:space="preserve">
+        <value>Arbeitsbereiche</value>
+    </data>
+    <data name="Employees" xml:space="preserve">
+        <value>Mitarbeiter</value>
+    </data>
+    <data name="TimeTracking" xml:space="preserve">
+        <value>Zeiterfassung</value>
+    </data>
+    <data name="Logout" xml:space="preserve">
+        <value>Abmelden</value>
+    </data>
+    <data name="DoYouWantToLogout" xml:space="preserve">
+        <value>Wollen Sie sich wirklich abmelden?</value>
+    </data>
+    <data name="ReleasedUsers" xml:space="preserve">
+        <value>Die Benutzer wurden erfolgreich freigegeben.</value>
+    </data>
+    <data name="Id" xml:space="preserve">
+        <value>Id</value>
+    </data>
+    <data name="EmailConfirmed" xml:space="preserve">
+        <value>E-Mail bestätigt</value>
+    </data>
+    <data name="Teams" xml:space="preserve">
+        <value>Teams</value>
+    </data>
+    <data name="Organization" xml:space="preserve">
+        <value>Organisation</value>
+    </data>
+    <data name="HostFlow" xml:space="preserve">
+        <value>HostFlow</value>
+    </data>
+    <data name="ViewTeams" xml:space="preserve">
+        <value>Teams ansehen</value>
+    </data>
+    <data name="ModifyTeam" xml:space="preserve">
+        <value>Team bearbeiten</value>
+    </data>
+    <data name="ErrorLoadingData" xml:space="preserve">
+        <value>Es wurden keine Daten gefunden.</value>
+    </data>
+    <data name="Team" xml:space="preserve">
+        <value>Team</value>
+    </data>
+    <data name="SearchPlaceHolder" xml:space="preserve">
+        <value>Suchen...</value>
+    </data>
+    <data name="AddTeam" xml:space="preserve">
+        <value>Team hinzufügen</value>
+    </data>
+    <data name="DeleteTeam" xml:space="preserve">
+        <value>Team löschen</value>
+    </data>
+    <data name="ViewTeam" xml:space="preserve">
+        <value>Team ansehen</value>
+    </data>
+    <data name="EditTeam" xml:space="preserve">
+        <value>Team bearbeiten</value>
+    </data>
+    <data name="TeamName" xml:space="preserve">
+        <value>Teamname</value>
+    </data>
+    <data name="SuccessfullyAddedTeam" xml:space="preserve">
+        <value>Team erfolgreich hinzugefügt.</value>
+    </data>
+    <data name="SuccessfullyModifiedTeam" xml:space="preserve">
+        <value>Team erfolgreich bearbeitet.</value>
+    </data>
+    <data name="SuccessfullyDeletedEntries" xml:space="preserve">
+        <value>Die Einträge wurden erfolgreich gelöscht.</value>
+    </data>
+    <data name="ViewEmployees" xml:space="preserve">
+        <value>Mitarbeiter ansehen</value>
+    </data>
+    <data name="Employee" xml:space="preserve">
+        <value>Mitarbeiter</value>
+    </data>
+    <data name="InviteEmployee" xml:space="preserve">
+        <value>Mitarbeiter einladen</value>
+    </data>
+    <data name="ModifyEmployee" xml:space="preserve">
+        <value>Mitarbeiter bearbeiten</value>
+    </data>
+    <data name="DeleteEmployee" xml:space="preserve">
+        <value>Mitarbeiter löschen</value>
+    </data>
+    <data name="Confirmed" xml:space="preserve">
+        <value>Bestätigt</value>
+    </data>
+    <data name="NotConfirmed" xml:space="preserve">
+        <value>Nicht bestätigt</value>
+    </data>
+    <data name="NoTeamAssigned" xml:space="preserve">
+        <value>Kein Team zugeordnet</value>
+    </data>
+    <data name="DoYouWantToDeleteEmployees" xml:space="preserve">
+        <value>Wollen Sie diese(n) Mitarbeiter löschen?</value>
+    </data>
+    <data name="DoYouWantToDeleteTeams" xml:space="preserve">
+        <value>Wollen Sie diese(s) Team(s) löschen?</value>
+    </data>
+    <data name="DeleteTeams" xml:space="preserve">
+        <value>Teams löschen</value>
+    </data>
+    <data name="DeleteEmployees" xml:space="preserve">
+        <value>Mitarbeiter löschen</value>
+    </data>
+    <data name="InsertEmployeeData" xml:space="preserve">
+        <value>Bitte geben Sie die Mitarbeiterdaten ein.</value>
+    </data>
+    <data name="Roles" xml:space="preserve">
+        <value>Rollen</value>
+    </data>
+    <data name="Management" xml:space="preserve">
+        <value>Management</value>
+    </data>
+    <data name="Role" xml:space="preserve">
+        <value>Rolle</value>
+    </data>
+    <data name="EmailAlreadyExists" xml:space="preserve">
+        <value>Diese E-Mail existiert bereits.</value>
+    </data>
+    <data name="Status" xml:space="preserve">
+        <value>Status</value>
+    </data>
+    <data name="Active" xml:space="preserve">
+        <value>Aktiv</value>
+    </data>
+    <data name="InviteSent" xml:space="preserve">
+        <value>Einladung gesendet</value>
+    </data>
+    <data name="EmployeeModifiedSuccessfully" xml:space="preserve">
+        <value>Mitarbeiter erfolgreich bearbeitet.</value>
+    </data>
+    <data name="AccountConfirmedSuccessfully" xml:space="preserve">
+        <value>Konto erfolgreich bestätigt.</value>
+    </data>
+    <data name="ShiftPlan" xml:space="preserve">
+        <value>Schichtplan</value>
+    </data>
+    <data name="InsertSmoobuApiKey" xml:space="preserve">
+        <value>Geben Sie hier Ihren Smoobu Api Key ein</value>
+    </data>
+    <data name="Save" xml:space="preserve">
+        <value>Speichern</value>
+    </data>
+    <data name="ApiKeyInvalid" xml:space="preserve">
+        <value>Der Api-Key ist ungültig.</value>
+    </data>
+    <data name="DoYouWantToChangeSettings" xml:space="preserve">
+        <value>Wollen Sie die Einstellung speichern?</value>
+    </data>
+    <data name="Tag" xml:space="preserve">
+        <value>Tag</value>
+    </data>
+    <data name="AddTag" xml:space="preserve">
+        <value>Tag hinzufügen</value>
+    </data>
+    <data name="EditTag" xml:space="preserve">
+        <value>Tag bearbeiten</value>
+    </data>
+    <data name="ViewTags" xml:space="preserve">
+        <value>Tags ansehen</value>
+    </data>
+    <data name="ModifyTag" xml:space="preserve">
+        <value>Tag bearbeiten</value>
+    </data>
+    <data name="DeleteTag" xml:space="preserve">
+        <value>Tag löschen</value>
+    </data>
+    <data name="Color" xml:space="preserve">
+        <value>Farbe</value>
+    </data>
+    <data name="IsNonAccommodation" xml:space="preserve">
+        <value>Ist nicht für Unterkünfte</value>
+    </data>
+    <data name="SuccessfullyModifiedTag" xml:space="preserve">
+        <value>Tag erfolgreich bearbeitet.</value>
+    </data>
+    <data name="SuccessfullyAddedTag" xml:space="preserve">
+        <value>Tag erfolgreich hinzugefügt.</value>
+    </data>
+    <data name="DoYouWantToDeleteTags" xml:space="preserve">
+        <value>Wollen Sie diese(n) Tag(s) löschen?</value>
+    </data>
+    <data name="DeleteTags" xml:space="preserve">
+        <value>Tag(s) löschen</value>
+    </data>
+    <data name="Calendar" xml:space="preserve">
+        <value>Kalender</value>
+    </data>
+    <data name="AddAppointment" xml:space="preserve">
+        <value>Termin hinzufügen</value>
+    </data>
+    <data name="InsertAppointmentData" xml:space="preserve">
+        <value>Bitte geben Sie Ihre Termindatein.</value>
+    </data>
+    <data name="SuccessfullyAddedAppointment" xml:space="preserve">
+        <value>Termin erfolgreich hinzugefügt.</value>
+    </data>
+    <data name="ModifyAppointment" xml:space="preserve">
+        <value>Termin bearbeiten</value>
+    </data>
+    <data name="Note" xml:space="preserve">
+        <value>Notiz</value>
+    </data>
+    <data name="SuccessfullyModifiedAppointment" xml:space="preserve">
+        <value>Buchung erfolgreich geupdated.</value>
+    </data>
+    <data name="Move" xml:space="preserve">
+        <value>Bewegen</value>
+    </data>
+    <data name="EmptyTag" xml:space="preserve">
+        <value>Leerer Tag</value>
+    </data>
+    <data name="Date" xml:space="preserve">
+        <value>Datum</value>
+    </data>
+    <data name="Start" xml:space="preserve">
+        <value>Start</value>
+    </data>
+    <data name="End" xml:space="preserve">
+        <value>Ende</value>
+    </data>
+    <data name="Clock" xml:space="preserve">
+        <value>Uhr</value>
+    </data>
+    <data name="DoYouWantToStartTimeTracking" xml:space="preserve">
+        <value>Wollen Sie die Zeiterfassung starten?</value>
+    </data>
+    <data name="DoYouWantToStopTimeTracking" xml:space="preserve">
+        <value>Wollen SIe die Zeiterfassung stoppen?</value>
+    </data>
+    <data name="SuccessfullyStartedTimeTracking" xml:space="preserve">
+        <value>Zeiterfassung erfolgreich gestartet.</value>
+    </data>
+    <data name="SuccessfullyStoppedTimeTracking" xml:space="preserve">
+        <value>Zeiterfassung erfolgreich gestoppt.</value>
+    </data>
+    <data name="Sum" xml:space="preserve">
+        <value>Gesamt</value>
+    </data>
+    <data name="Hours" xml:space="preserve">
+        <value>Stunden</value>
+    </data>
+    <data name="Modify" xml:space="preserve">
+        <value>Bearbeiten</value>
+    </data>
+    <data name="Delete" xml:space="preserve">
+        <value>Löschen</value>
+    </data>
+    <data name="Add" xml:space="preserve">
+        <value>Hinzufügen</value>
+    </data>
+    <data name="DoYouWantToDeleteEntries" xml:space="preserve">
+        <value>Wollen Sie diese Einträge löschen?</value>
+    </data>
+    <data name="SuccessfullyAddedEmployee" xml:space="preserve">
+        <value>Mitarbeiter erfolgreich hinzugefügt.</value>
+    </data>
+    <data name="SuccessfullyAddedTimeTrackingEntry" xml:space="preserve">
+        <value>Zeiteintrag erfolgreich hinzugefügt.</value>
+    </data>
+    <data name="SuccessfullyModifiedTimeTrackingEntry" xml:space="preserve">
+        <value>Zeiteintrag erfolgreich bearbeitet.</value>
+    </data>
+    <data name="NotStampOutSince" xml:space="preserve">
+        <value>Sie haben seit über</value>
+    </data>
+    <data name="NotStampOutSinceInsertData" xml:space="preserve">
+        <value>nicht ausgestempelt, bitte tragen Sie Ihre Zeiten  nach.</value>
+    </data>
+    <data name="InsertTrackingGapHours" xml:space="preserve">
+        <value>Geben Sie hier Ihren maximalen Zeiterfassungs-Abstand ein.</value>
+    </data>
+    <data name="SettingsSavedSuccessfully" xml:space="preserve">
+        <value>Einstellungen erfolgreich gespeichert.</value>
+    </data>
+    <data name="EmployeeAllowedEditTimeEntry" xml:space="preserve">
+        <value>Mitarbeiter dürfen Zeiteinträge bearbeiten</value>
+    </data>
+    <data name="EmployeeAllowedManualTimeEntry" xml:space="preserve">
+        <value>Mitarbeiter dürfen Zeiteinträge manuell hinzufügen</value>
+    </data>
+    <data name="Month" xml:space="preserve">
+        <value>Monat</value>
+    </data>
+    <data name="Week" xml:space="preserve">
+        <value>Woche</value>
+    </data>
+    <data name="CW" xml:space="preserve">
+        <value>KW</value>
+    </data>
+    <data name="Export" xml:space="preserve">
+        <value>Exportieren</value>
+    </data>
+</root>

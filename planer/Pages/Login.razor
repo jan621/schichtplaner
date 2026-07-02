@@ -1,0 +1,280 @@
+@page "/"
+@page "/confirmMail/{ConfirmAccountMail}"
+@page "/mailConfirmed"
+@page "/mailconfirmedFailedAlready"
+@page "/mailconfirmedFailed"
+@page "/passwordReset-{UserName}"
+@page "/confirmEmployeeAccount/{ConfirmEmployeeMail}"
+@page "/employeeConfirmed"
+
+@using System.ComponentModel.DataAnnotations
+@using System.Net
+@using CrossCutting.Identity
+@using CrossCutting.Language
+@using EmployeeManagement.Contract
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.Localization
+@using planer.Dialogs
+@using planer.Identity
+@using UserManagement.Contract
+
+@inject IStringLocalizer<Language> Localizer;
+@inject ISnackbar Snackbar;
+@inject IUserManager UserManager;
+@inject IEmployeeManager EmployeeManager;
+@inject IDialogService DialogService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>@Localizer["SignIn"]</PageTitle>
+
+<MudContainer Class="mt-16" MaxWidth="MaxWidth.ExtraSmall">
+    <MudCard>
+        <MudCardContent>
+            <MudForm @bind-IsValid="@_valid">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center">
+                            <MudText Typo="Typo.h4">@Localizer["SignIn"]</MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center">
+                            <MudText>@Localizer["InsertLoginData"]</MudText>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" Label="@Localizer["Email"]" Variant="Variant.Outlined" @bind-Value="_email" Required="true" RequiredError="@Localizer["FieldIsRequired"]"
+                                      Validation="@(new EmailAddressAttribute() { ErrorMessage = @Localizer["EmailIsInvalid"] })"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="@Localizer["Password"]" Variant="Variant.Outlined" @bind-Value="_password" InputType="@_passwordInputType"
+                                      Adornment="Adornment.End" AdornmentIcon="@_passwordInputIcon" OnAdornmentClick="TogglePasswordVisibility"
+                                      Required="true" RequiredError="@Localizer["FieldIsRequired"]"/>
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-space-between align-center">
+                        <MudCheckBox T="bool" Label="@Localizer["RememberMe"]" Color="Color.Primary" @bind-Checked="_rememberMe" Class="ml-n1"></MudCheckBox>
+                        <MudButton Disabled="@(!_email.Contains('@'))" OnClick="@ResetPassword" Color="Color.Primary">@Localizer["ForgotPassword"]</MudButton>
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-center">
+                        <MudButton Variant="Variant.Outlined" Disabled="@(!_valid || _loading)" Color="Color.Primary"
+                                   Size="Size.Large" Style="width: 100%;" OnClick="SignIn">
+                            @if (_loading)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                                <MudText Class="ms-2">@Localizer["Processing"]</MudText>
+                            }
+                            else
+                            {
+                                <MudText>@Localizer["SignIn"]</MudText>
+                            }
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-center">
+                        <MudButton OnClick="RedirectToSignUp" Color="Color.Primary">@Localizer["NoAccount"]</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    [Parameter] public string? ConfirmAccountMail { get; set; }
+
+    [Parameter] public string? MailConfirmed { get; set; }
+
+    [Parameter] public string? UserName { get; set; }
+
+    [Parameter] public string? ConfirmEmployeeMail { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState> _authenticationStateTask { get; set; }
+
+    private MudTextField<string> _passwordField = new();
+    private InputType _passwordInputType = InputType.Password;
+    private bool _valid;
+    private bool _rememberMe;
+    private bool _passwordVisibility;
+    private bool _loading;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!string.IsNullOrEmpty(ConfirmAccountMail))
+            {
+                await ConfirmMail(ConfirmAccountMail);
+            }
+
+            if (!string.IsNullOrEmpty(ConfirmEmployeeMail))
+                await ConfirmEmployee(ConfirmEmployeeMail);
+
+            if (NavigationManager.Uri.Split("/").Last().ToLower() == "mailconfirmed")
+                Snackbar.Add(Localizer["EmailConfirmedSuccessfully"], Severity.Success);
+            if (NavigationManager.Uri.Split("/").Last().ToLower() == "mailconfirmedfailedalready")
+                Snackbar.Add(Localizer["EmailAlreadyConfirmed"], Severity.Warning);
+            if (NavigationManager.Uri.Split("/").Last().ToLower() == "mailconfirmedfailed")
+                Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+            if (NavigationManager.Uri.Split("/").Last().ToLower() == "employeeconfirmed")
+                Snackbar.Add(Localizer["AccountConfirmedSuccessfully"], Severity.Success);
+
+            if (!string.IsNullOrEmpty(UserName))
+            {
+                var parameters = new DialogParameters<ResetPasswordDialog>();
+                parameters.Add(x => x.ContentText, @Localizer["TypeInYourNewPassword"]);
+
+                var dialog = await DialogService.ShowAsync<ResetPasswordDialog>(@Localizer["ResetPassword"], parameters);
+                var dialogResult = await dialog.Result;
+
+                if (!dialogResult.Canceled)
+                {
+                    var resetPasswordRequest = dialogResult.Data as PasswordResetRequest;
+                    var convertedUserName = UserName.Replace("(at)", "@");
+                    convertedUserName = convertedUserName.Replace("(point)", ".");
+                    resetPasswordRequest!.UserName = convertedUserName;
+                    try
+                    {
+                        await UserManager.ResetPassword(resetPasswordRequest);
+                        Snackbar.Add(Localizer["PasswordResetSuccessfully"], Severity.Success);
+                    }
+                    catch
+                    {
+                        Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+                    }
+                }
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await _authenticationStateTask;
+
+        if (authenticationState.User.Identity != null &&
+            authenticationState.User.Identity.IsAuthenticated)
+            NavigationManager.NavigateTo("/calendar");
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task SignIn(MouseEventArgs arg)
+    {
+        _loading = true;
+        try
+        {
+            var signInResult = await UserManager.LoginUser(new SignInRequest
+            {
+                Email = _email,
+                Password = _password,
+                RememberMe = _rememberMe
+            });
+
+            if (signInResult == SignInResult.Success)
+            {
+                Guid key = Guid.NewGuid();
+                LoginMiddleware.Logins[key] = new SignInRequest { Email = _email, Password = _password, RememberMe = _rememberMe };
+                NavigationManager.NavigateTo($"/login?key={key}", true);
+            }
+            else
+            {
+                throw new Exception(HttpStatusCode.Unauthorized.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message == HttpStatusCode.Unauthorized.ToString())
+                Snackbar.Add(Localizer["WrongLoginData"], Severity.Warning);
+            else if (ex.Message == HttpStatusCode.Forbidden.ToString())
+                Snackbar.Add(Localizer["NotActivated"], Severity.Warning);
+            else
+                Snackbar.Add(Localizer["LoginFailed"], Severity.Error);
+            _loading = false;
+        }
+
+        _loading = false;
+    }
+
+    void TogglePasswordVisibility()
+    {
+        if (_passwordVisibility)
+        {
+            _passwordVisibility = false;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+            _passwordInputType = InputType.Password;
+        }
+        else
+        {
+            _passwordVisibility = true;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+            _passwordInputType = InputType.Text;
+        }
+    }
+
+    async Task ResetPassword()
+    {
+        var parameters = new DialogParameters<YesNoDialog>();
+        parameters.Add(x => x.ContentText, @Localizer["DoYouWantToResetPassword"]);
+        var dialog = await DialogService.ShowAsync<YesNoDialog>(@Localizer["ResetPassword"], parameters);
+        var dialogResult = await dialog.Result;
+
+        if (!dialogResult.Canceled)
+        {
+            try
+            {
+                await UserManager.SetPasswordReset(_email);
+                Snackbar.Add(Localizer["PasswordResetSuccess"], Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message == HttpStatusCode.Conflict.ToString())
+                    Snackbar.Add(Localizer["NotActivated"], Severity.Warning);
+
+                Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+                _loading = false;
+            }
+        }
+    }
+
+    void RedirectToSignUp()
+    {
+        NavigationManager.NavigateTo("signup");
+    }
+
+    async Task ConfirmMail(string mail)
+    {
+        try
+        {
+            var convertedMail = mail.Replace("(at)", "@");
+            convertedMail = convertedMail.Replace("(point)", ".");
+            await UserManager.ConfirmUserEmail(convertedMail);
+            NavigationManager.NavigateTo("/mailConfirmed", true);
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message == HttpStatusCode.Conflict.ToString())
+                NavigationManager.NavigateTo("/mailConfirmedFailedAlready", true);
+            else
+                NavigationManager.NavigateTo("/mailConfirmedFailed", true);
+        }
+    }
+
+    async Task ConfirmEmployee(string mail)
+    {
+        try
+        {
+            var convertedMail = mail.Replace("(at)", "@");
+            convertedMail = convertedMail.Replace("(point)", ".");
+            await EmployeeManager.ConfirmEmployee(convertedMail);
+            NavigationManager.NavigateTo("/employeeConfirmed", true);
+        }
+        catch (Exception ex)
+        {
+            NavigationManager.NavigateTo("/mailConfirmedFailed", true);
+        }
+    }
+
+}

@@ -1,0 +1,67 @@
+@using CrossCutting.Language
+@using Microsoft.Extensions.Localization
+
+@inject IStringLocalizer<Language> Localizer;
+
+
+<MudNavMenu Color="Color.Primary" Margin="Margin.Dense" Rounded="true" Class="">
+    <AuthorizeView>
+        <MudStack Class="mb-2" Spacing="0">
+            <MudText Typo="Typo.h6" Class="px-4">@Localizer["ApplicationName"]</MudText>
+            <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">@Localizer["HostFlow"]</MudText>
+            <MudDivider Class="my-2"/>
+        </MudStack>
+        <MudNavGroup Href="/workAreas" Match="NavLinkMatch.Prefix" Style="text-decoration: none !important;"
+                     Icon="@Icons.Material.Filled.Construction" Title="@Localizer["WorkAreas"]">
+            <MudNavLink Href="/calendar" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.CalendarMonth" Style="text-decoration: none;">
+                @Localizer["CalendarOverview"]
+            </MudNavLink>
+            @if (context.User.IsInRole("Administrator") || context.User.IsInRole("Developer")
+                                                        || context.User.IsInRole("Company"))
+            {
+                <MudNavLink Href="/teams" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Groups">
+                    @Localizer["Teams"]
+                </MudNavLink>
+                <MudNavLink Href="/tags" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Label">
+                    @Localizer["Tags"]
+                </MudNavLink>
+            }
+        </MudNavGroup>
+    </AuthorizeView>
+    <AuthorizeView Roles="Company,Developer,Management">
+        <MudNavGroup Match="NavLinkMatch.Prefix" Expanded="false"
+                     Icon="@Icons.Material.Filled.Apartment" Title="@Localizer["Organization"]">
+            <MudNavLink Href="/teams" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.Groups">
+                @Localizer["Teams"]
+            </MudNavLink>
+            <MudNavLink Href="/employees" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.Badge">
+                @Localizer["Employees"]
+            </MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+    <AuthorizeView>
+        <MudNavLink Href="/timeTracking" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Timer">
+            @Localizer["TimeTracking"]
+        </MudNavLink>
+    </AuthorizeView>
+    <AuthorizeView Roles="Company,Developer,Administrator">
+        <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Settings">
+            @Localizer["Settings"]
+        </MudNavLink>
+    </AuthorizeView>
+    <AuthorizeView Roles="Company,Developer">
+        <MudNavGroup Title="@Localizer["Administrator"]" Expanded="false">
+            <MudNavLink Href="/releaseUsers" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.People">
+                @Localizer["ReleaseUsers"]
+            </MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+</MudNavMenu>
