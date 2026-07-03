@@ -44,17 +44,10 @@ Basisrollen an (Employee, Company, Administrator, Developer, Management).
 
 ### Erster Login
 
-Nach der Registrierung verlangt die App eine E-Mail-Bestätigung und die
-Freischaltung des Kontos. Solange kein SMTP konfiguriert ist, den ersten
-Admin-Account einmalig direkt in der Datenbank freischalten (Railway →
-MySQL-Service → *Data*):
-
-```sql
-UPDATE AspNetUsers SET EmailConfirmed = 1, Activated = 1 WHERE Email = 'deine@mail.ch';
-```
-
-Alle weiteren Benutzer können danach über die Seite „Benutzer freischalten"
-in der App aktiviert werden.
+Der **erste registrierte Account** einer frischen Installation wird automatisch
+aktiviert und bestätigt und kann sich direkt einloggen. Alle weiteren Benutzer
+durchlaufen den normalen Ablauf: E-Mail-Bestätigung (SMTP nötig) bzw.
+Freischaltung über die Seite „Benutzer freischalten" in der App.
 
 ## Lokal entwickeln
 

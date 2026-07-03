@@ -44,6 +44,15 @@ public class UserManager(
         if (dbUser != null)
             throw new Exception(HttpStatusCode.Conflict.ToString());
 
+        // Bootstrap: the very first account of a fresh installation is
+        // activated and confirmed automatically — otherwise nobody could
+        // ever log in to release or confirm the accounts that follow.
+        if (!await identityUserManager.Users.AnyAsync())
+        {
+            user.Activated = true;
+            user.EmailConfirmed = true;
+        }
+
         var identityResult = await identityUserManager.CreateAsync(user, request.Password);
 
         if (identityResult != IdentityResult.Success)
