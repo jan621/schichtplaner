@@ -31,8 +31,8 @@ public class EmployeeManager(
         var currentUser = await userManager.GetCurrentUserAsync();
         var leader = await organizationManager.GetOrganizationLeaderAsync(currentUser.Organization);
         var dbEmployees = (List<User>)await databaseManager.GetAllAsync(true);
-        var result = dbEmployees.Where(e => e.Id != currentUser.Id && e.Id != leader.Id
-                                                                   && e.Organization.Id == currentUser.Organization.Id);
+        var result = dbEmployees.Where(e => e.Id != currentUser.Id && e.Id != leader?.Id
+                                                                   && e.Organization?.Id == currentUser.Organization.Id);
         return result;
     }
 
@@ -43,7 +43,7 @@ public class EmployeeManager(
         return created;
     }
 
-    public async Task InviteEmployeeAsync(SignUpEmployeeRequest request)
+    public async Task<string> InviteEmployeeAsync(SignUpEmployeeRequest request)
     {
         var user = mapper.Map<User>(request);
 
@@ -85,6 +85,26 @@ public class EmployeeManager(
             .Replace("{1}", user.Organization.Name)
             .Replace("{2}", convertedMail)
             .Replace("{3}", generatedPassword);
+
+        await mailManager.SendAsync(mailMessage);
+
+        return generatedPassword;
+    }
+
+    public async Task ReleaseEmployeeAsync(User employee)
+    {
+        employee.EmailConfirmed = true;
+        employee.Activated = true;
+        await identityUserManager.UpdateAsync(employee);
+
+        var mailTemplate = mailManager.GetMailTemplateByType(MailTemplateType.AccountActivatedByHost);
+
+        var mailMessage = new MailMessage
+        {
+            To = employee.Email,
+            Subject = mailTemplate?.Subject,
+            Body = mailTemplate?.Body?.Replace("{0}", employee.FirstName)
+        };
 
         await mailManager.SendAsync(mailMessage);
     }

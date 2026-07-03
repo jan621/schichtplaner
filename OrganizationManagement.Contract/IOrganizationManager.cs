@@ -5,5 +5,5 @@ namespace OrganizationManagement.Contract;
 
 public interface IOrganizationManager : IEntityManager<Organization>
 {
-    Task<User> GetOrganizationLeaderAsync(Organization organization);
+    Task<User?> GetOrganizationLeaderAsync(Organization organization);
 }

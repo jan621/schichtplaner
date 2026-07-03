@@ -45,9 +45,12 @@ Basisrollen an (Employee, Company, Administrator, Developer, Management).
 ### Erster Login
 
 Der **erste registrierte Account** einer frischen Installation wird automatisch
-aktiviert und bestätigt und kann sich direkt einloggen. Alle weiteren Benutzer
-durchlaufen den normalen Ablauf: E-Mail-Bestätigung (SMTP nötig) bzw.
-Freischaltung über die Seite „Benutzer freischalten" in der App.
+aktiviert und bestätigt und kann sich direkt einloggen.
+
+**Mitarbeiter einladen** funktioniert auch ohne Mailserver: Beim Einladen wird
+das Startpasswort einmalig angezeigt, und nicht aktivierte Mitarbeiter können
+in der Mitarbeiterliste per Knopfdruck freigeschaltet werden. Mit konfiguriertem
+SMTP erhalten Mitarbeiter zusätzlich eine Einladungs-Mail mit Bestätigungslink.
 
 ## Lokal entwickeln
 

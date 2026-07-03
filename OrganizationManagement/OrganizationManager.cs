@@ -12,18 +12,21 @@ public class OrganizationManager(
     UserManager<User> identityUserManager)
     : IOrganizationManager
 {
-    public async Task<User> GetOrganizationLeaderAsync(Organization organization)
+    public async Task<User?> GetOrganizationLeaderAsync(Organization organization)
     {
-        foreach (var user in organization.Users)
+        foreach (var user in organization.Users ?? Enumerable.Empty<User>())
         {
-            var isAdministrator = await identityUserManager.IsInRoleAsync(user, Role.Company.ToString())
+            var isAdministrator = await identityUserManager.IsInRoleAsync(user, Role.Administrator.ToString())
+                || await identityUserManager.IsInRoleAsync(user, Role.Company.ToString())
                 || await identityUserManager.IsInRoleAsync(user, Role.Developer.ToString());
 
             if (isAdministrator)
                 return user;
         }
 
-        throw new Exception("No Leader in Organization");
+        // An organization without a leader is possible (e.g. self-registered
+        // accounts only) — callers treat this as "nobody to exclude".
+        return null;
     }
 
     public async Task<IEnumerable<Organization>> GetAllAsync()

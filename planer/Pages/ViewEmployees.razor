@@ -45,6 +45,14 @@
                                Variant="Variant.Outlined" OnClick="@EditEmployee">
                         @Localizer["ModifyEmployee"]
                     </MudButton>
+
+                    @if (!_selectedEmployees.First().Activated)
+                    {
+                        <MudButton StartIcon="@Icons.Material.Filled.LockOpen" Color="Color.Success"
+                                   Variant="Variant.Outlined" OnClick="@ReleaseEmployee">
+                            @Localizer["ReleaseEmployee"]
+                        </MudButton>
+                    }
                 }
                 <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error"
                            Variant="Variant.Outlined" OnClick="@DeleteEmployee">
@@ -202,16 +210,32 @@
         var dialog = await DialogService.ShowAsync<AddEmployeeDialog>(@Localizer["InviteEmployee"]);
         var dialogResult = await dialog.Result;
 
-        if (dialogResult.Canceled)
-        {
-            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
-            return;
-        }
-
-        if (!Convert.ToBoolean(dialogResult.Data))
+        if (dialogResult.Canceled || dialogResult.Data is not string[] { Length: 2 } inviteResult)
             return;
 
         Snackbar.Add(Localizer["SuccessfullyAddedEmployee"], Severity.Success);
+        await _table.ReloadServerData();
+
+        await DialogService.ShowMessageBox(
+            Localizer["InviteEmployee"],
+            (MarkupString)($"<b>{Localizer["EmployeeStartPassword", inviteResult[0], inviteResult[1]]}</b><br/><br/>" +
+                           Localizer["EmployeeStartPasswordHint"].Value));
+    }
+
+    private async Task ReleaseEmployee(MouseEventArgs arg)
+    {
+        var employee = _selectedEmployees.First();
+
+        try
+        {
+            await EmployeeManager.ReleaseEmployeeAsync(employee);
+            Snackbar.Add(Localizer["SuccessfullyReleasedEmployee"], Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+        }
+
         await _table.ReloadServerData();
     }
 

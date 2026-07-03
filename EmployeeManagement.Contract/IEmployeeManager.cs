@@ -10,11 +10,14 @@ public interface IEmployeeManager
     
     Task<bool> AddAsync(User employee);
 
-    Task InviteEmployeeAsync(SignUpEmployeeRequest request);
+    /// <returns>The generated start password of the invited employee.</returns>
+    Task<string> InviteEmployeeAsync(SignUpEmployeeRequest request);
 
     Task<bool> EditAsync(User employee);
 
     Task<bool> DeleteAsync(User employee);
 
     Task ConfirmEmployee(string employeeMail);
+
+    Task ReleaseEmployeeAsync(User employee);
 }

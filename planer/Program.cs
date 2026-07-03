@@ -148,6 +148,9 @@ using (var scope = app.Services.CreateScope())
 
         var userManager = scope.ServiceProvider.GetRequiredService<IUserManager>();
         await userManager.CreateBasicRolesAsync();
+
+        var mailManager = scope.ServiceProvider.GetRequiredService<IMailManager>();
+        await mailManager.EnsureDefaultTemplatesAsync();
     }
     catch (Exception ex)
     {

@@ -31,7 +31,7 @@
             }
         </MudNavGroup>
     </AuthorizeView>
-    <AuthorizeView Roles="Company,Developer,Management">
+    <AuthorizeView Roles="Company,Developer,Management,Administrator">
         <MudNavGroup Match="NavLinkMatch.Prefix" Expanded="false"
                      Icon="@Icons.Material.Filled.Apartment" Title="@Localizer["Organization"]">
             <MudNavLink Href="/teams" Match="NavLinkMatch.Prefix"
@@ -50,13 +50,13 @@
             @Localizer["TimeTracking"]
         </MudNavLink>
     </AuthorizeView>
-    <AuthorizeView Roles="Company,Developer,Administrator">
+    <AuthorizeView Roles="Company,Developer,Administrator,Management">
         <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix"
                     Icon="@Icons.Material.Filled.Settings">
             @Localizer["Settings"]
         </MudNavLink>
     </AuthorizeView>
-    <AuthorizeView Roles="Company,Developer">
+    <AuthorizeView Roles="Company,Developer,Administrator">
         <MudNavGroup Title="@Localizer["Administrator"]" Expanded="false">
             <MudNavLink Href="/releaseUsers" Match="NavLinkMatch.Prefix"
                         Icon="@Icons.Material.Filled.People">

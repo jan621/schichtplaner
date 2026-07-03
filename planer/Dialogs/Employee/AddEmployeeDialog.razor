@@ -123,18 +123,24 @@
         _signUpEmployeeRequest.Role = SelectedRole;
         _signUpEmployeeRequest.Organization = currentUser.Organization;
 
+        string startPassword;
         try
         {
-            await EmployeeManager.InviteEmployeeAsync(_signUpEmployeeRequest);
+            startPassword = await EmployeeManager.InviteEmployeeAsync(_signUpEmployeeRequest);
         }
         catch (Exception ex)
         {
-            if(ex.ToString() == HttpStatusCode.Conflict.ToString())
+            if (ex.Message == HttpStatusCode.Conflict.ToString())
                 Snackbar.Add(Localizer["EmailAlreadyExists"], Severity.Warning);
+            else
+                Snackbar.Add(Localizer["ErrorOccurred"], Severity.Error);
+
+            Loading = false;
+            return;
         }
 
         Loading = false;
-        MudDialog.Close(true);
+        MudDialog.Close(new[] { _signUpEmployeeRequest.Email, startPassword });
     }
 
     void Cancel() => MudDialog.Close(false);

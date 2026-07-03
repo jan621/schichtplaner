@@ -458,4 +458,16 @@
     <data name="Export" xml:space="preserve">
         <value>Export</value>
     </data>
+    <data name="ReleaseEmployee" xml:space="preserve">
+        <value>Activate</value>
+    </data>
+    <data name="SuccessfullyReleasedEmployee" xml:space="preserve">
+        <value>Employee successfully activated</value>
+    </data>
+    <data name="EmployeeStartPassword" xml:space="preserve">
+        <value>Start password for {0}: {1}</value>
+    </data>
+    <data name="EmployeeStartPasswordHint" xml:space="preserve">
+        <value>Please note it down and hand it to the employee securely – it is shown only once. If a mail server is configured, the employee additionally receives an invitation mail.</value>
+    </data>
 </root>

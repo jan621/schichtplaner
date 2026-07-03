@@ -465,4 +465,16 @@
     <data name="Export" xml:space="preserve">
         <value>Exportieren</value>
     </data>
+    <data name="ReleaseEmployee" xml:space="preserve">
+        <value>Freischalten</value>
+    </data>
+    <data name="SuccessfullyReleasedEmployee" xml:space="preserve">
+        <value>Mitarbeiter erfolgreich freigeschaltet</value>
+    </data>
+    <data name="EmployeeStartPassword" xml:space="preserve">
+        <value>Startpasswort für {0}: {1}</value>
+    </data>
+    <data name="EmployeeStartPasswordHint" xml:space="preserve">
+        <value>Bitte notieren und sicher an den Mitarbeiter weitergeben – es wird nur einmal angezeigt. Falls ein Mailserver konfiguriert ist, erhält der Mitarbeiter zusätzlich eine Einladungs-Mail.</value>
+    </data>
 </root>

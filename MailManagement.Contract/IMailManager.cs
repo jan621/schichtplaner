@@ -10,4 +10,6 @@ public interface IMailManager
     MailTemplate? GetMailTemplateByType(MailTemplateType mailTemplateType);
     
     Task SendAsync(MailMessage message);
+
+    Task EnsureDefaultTemplatesAsync();
 }
